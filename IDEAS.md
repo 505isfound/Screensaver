@@ -11,4 +11,6 @@
 - [ ] Webb images (Cosmic Cliffs, Pillars of Creation, ...)
 
 ## Done
+- Iris Nebula v0.3: nebula effects, star bursts, sliders, random timing. 2026-11-11.
+- Iris Nebula v0.2: instant start. 2026-11-11.
 - Iris Nebula v0.1: still picture, twinkling stars, nebula glow, settings, any monitor layout. 2026-11-11.

@@ -1,8 +1,16 @@
 #include "settings.h"
 #include "resource.h"
+#include <commctrl.h>
 #include <algorithm>
+#include <cmath>
 
 static const wchar_t* kKey = L"Software\\Iris Nebula Screensaver";
+
+// Registry names of the sliders, in the same order as enum Slider.
+static const wchar_t* kSliderNames[SliderCount] = {
+    L"TwinkleAmount", L"TwinkleSpeed", L"BurstFrequency", L"BurstBrightness",
+    L"GlowAmount", L"EffectSpeed", L"FlashFrequency", L"FlashBrightness",
+};
 
 static DWORD ReadNumber(const wchar_t* name, DWORD fallback)
 {
@@ -21,45 +29,80 @@ Settings LoadSettings()
 {
     Settings s;
     s.layout = (LayoutMode)std::min<DWORD>(ReadNumber(L"Layout", 0), 2);
-    s.twinkle = (int)std::min<DWORD>(ReadNumber(L"Twinkle", 1), 2);
-    s.nebula = (int)std::min<DWORD>(ReadNumber(L"NebulaGlow", 1), 2);
+    for (int i = 0; i < SliderCount; i++)
+        s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
-    s.effects = ReadNumber(L"NebulaEffects", 0) & 63;
+    s.effects = ReadNumber(L"NebulaEffects", 63) & 63;
     return s;
 }
 
 void SaveSettings(const Settings& s)
 {
     WriteNumber(L"Layout", (DWORD)s.layout);
-    WriteNumber(L"Twinkle", (DWORD)s.twinkle);
-    WriteNumber(L"NebulaGlow", (DWORD)s.nebula);
+    for (int i = 0; i < SliderCount; i++)
+        WriteNumber(kSliderNames[i], (DWORD)s.sliders[i]);
     WriteNumber(L"SlowZoom", s.slowZoom ? 1 : 0);
+    WriteNumber(L"NebulaEffects", s.effects);
 }
 
-float TwinkleStrength(const Settings& s)
+Tuning GetTuning(const Settings& s)
 {
-    const float values[] = { 0.25f, 0.45f, 0.70f };
-    return values[s.twinkle];
+    auto amount = [&](Slider k) { return s.sliders[k] / 50.0f; };                  // 0 .. 2
+    auto speed = [&](Slider k) { return std::pow(2.0f, (s.sliders[k] - 50) / 25.0f); }; // 1/4 .. 4
+    Tuning t;
+    t.twinkle = 0.45f * amount(SliderTwinkleAmount);
+    t.twinkleSpeed = speed(SliderTwinkleSpeed);
+    t.burstRate = amount(SliderBurstFrequency) * amount(SliderBurstFrequency);     // 0 .. 4
+    t.burstGain = amount(SliderBurstBrightness);
+    t.nebula = amount(SliderGlowAmount);
+    t.effectSpeed = speed(SliderEffectSpeed);
+    t.flashInterval = s.sliders[SliderFlashFrequency] == 0 ? 0.0f
+                    : 52.0f * std::pow(2.0f, (50 - s.sliders[SliderFlashFrequency]) / 25.0f);  // ~200 s .. 13 s
+    t.flashGain = amount(SliderFlashBrightness);
+    return t;
 }
 
-float NebulaStrength(const Settings& s)
-{
-    const float values[] = { 0.0f, 1.0f, 2.2f };
-    return values[s.nebula];
-}
+// ------------------------------------------------------------- settings window
 
 static void FillCombo(HWND dlg, int id, const wchar_t* const* items, int count, int selected)
 {
     HWND combo = GetDlgItem(dlg, id);
+    SendMessageW(combo, CB_RESETCONTENT, 0, 0);
     for (int i = 0; i < count; i++)
         SendMessageW(combo, CB_ADDSTRING, 0, (LPARAM)items[i]);
     SendMessageW(combo, CB_SETCURSEL, selected, 0);
 }
 
-static int ComboChoice(HWND dlg, int id)
+static void ShowSettings(HWND dlg, const Settings& s)
 {
-    LRESULT i = SendDlgItemMessageW(dlg, id, CB_GETCURSEL, 0, 0);
-    return i < 0 ? 0 : (int)i;
+    const wchar_t* layouts[] = { L"Automatic", L"One picture across all monitors", L"Each monitor separately" };
+    FillCombo(dlg, IDC_LAYOUT, layouts, 3, (int)s.layout);
+    for (int i = 0; i < SliderCount; i++)
+    {
+        HWND slider = GetDlgItem(dlg, IDC_SLIDER_FIRST + i);
+        SendMessageW(slider, TBM_SETRANGE, TRUE, MAKELPARAM(0, 100));
+        SendMessageW(slider, TBM_SETPAGESIZE, 0, 10);
+        SendMessageW(slider, TBM_SETTICFREQ, 50, 0);
+        SendMessageW(slider, TBM_SETPOS, TRUE, s.sliders[i]);
+    }
+    for (int i = 0; i < 6; i++)
+        CheckDlgButton(dlg, IDC_EFFECT_FIRST + i, (s.effects >> i) & 1 ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(dlg, IDC_ZOOM, s.slowZoom ? BST_CHECKED : BST_UNCHECKED);
+}
+
+static Settings ReadDialog(HWND dlg)
+{
+    Settings s;
+    LRESULT layout = SendDlgItemMessageW(dlg, IDC_LAYOUT, CB_GETCURSEL, 0, 0);
+    s.layout = (LayoutMode)(layout < 0 ? 0 : layout);
+    for (int i = 0; i < SliderCount; i++)
+        s.sliders[i] = (int)SendDlgItemMessageW(dlg, IDC_SLIDER_FIRST + i, TBM_GETPOS, 0, 0);
+    s.effects = 0;
+    for (int i = 0; i < 6; i++)
+        if (IsDlgButtonChecked(dlg, IDC_EFFECT_FIRST + i) == BST_CHECKED)
+            s.effects |= 1u << i;
+    s.slowZoom = IsDlgButtonChecked(dlg, IDC_ZOOM) == BST_CHECKED;
+    return s;
 }
 
 static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM)
@@ -67,32 +110,20 @@ static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM)
     switch (msg)
     {
     case WM_INITDIALOG:
-    {
-        Settings s = LoadSettings();
-        const wchar_t* layouts[] = { L"Automatic", L"One picture across all monitors", L"Each monitor separately" };
-        const wchar_t* twinkles[] = { L"Gentle", L"Normal", L"Lively" };
-        const wchar_t* glows[] = { L"Off", L"Subtle", L"Stronger" };
-        FillCombo(dlg, IDC_LAYOUT, layouts, 3, (int)s.layout);
-        FillCombo(dlg, IDC_TWINKLE, twinkles, 3, s.twinkle);
-        FillCombo(dlg, IDC_NEBULA, glows, 3, s.nebula);
-        CheckDlgButton(dlg, IDC_ZOOM, s.slowZoom ? BST_CHECKED : BST_UNCHECKED);
+        ShowSettings(dlg, LoadSettings());
         return TRUE;
-    }
     case WM_COMMAND:
-        if (LOWORD(wp) == IDOK)
+        switch (LOWORD(wp))
         {
-            Settings s;
-            s.layout = (LayoutMode)ComboChoice(dlg, IDC_LAYOUT);
-            s.twinkle = ComboChoice(dlg, IDC_TWINKLE);
-            s.nebula = ComboChoice(dlg, IDC_NEBULA);
-            s.slowZoom = IsDlgButtonChecked(dlg, IDC_ZOOM) == BST_CHECKED;
-            SaveSettings(s);
+        case IDOK:
+            SaveSettings(ReadDialog(dlg));
             EndDialog(dlg, IDOK);
             return TRUE;
-        }
-        if (LOWORD(wp) == IDCANCEL)
-        {
+        case IDCANCEL:
             EndDialog(dlg, IDCANCEL);
+            return TRUE;
+        case IDC_DEFAULTS:
+            ShowSettings(dlg, Settings());
             return TRUE;
         }
         break;
@@ -102,5 +133,7 @@ static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM)
 
 void ShowSettingsDialog(HINSTANCE instance, HWND parent)
 {
+    INITCOMMONCONTROLSEX icc = { sizeof(icc), ICC_BAR_CLASSES };
+    InitCommonControlsEx(&icc);
     DialogBoxW(instance, MAKEINTRESOURCEW(IDD_SETTINGS), parent, SettingsProc);
 }

@@ -19,12 +19,17 @@ cbuffer ViewConstants : register(b0)
     float2 texMin;        // image area held by the picture texture (top-left)
     float2 texSize;       // ... and its size, in image pixels
     float  scale;         // screen pixels per image pixel
-    float  time;          // seconds since start
+    float  time;          // clock for star twinkle (runs faster/slower with "Twinkle speed")
     float  twinkle;       // twinkle strength (0 = off)
     float  nebula;        // nebula glow strength (0 = off)
     float  fade;          // 0..1 fade in at start
     uint   effects;       // which nebula effects are on (EFFECT_... below)
-    float2 padding;
+    float  flashAge;      // seconds since the nebula's last flash (random timing, set by the program)
+    float  nebulaTime;    // clock for nebula effects (runs faster/slower with "Effect speed")
+    float  burstRate;     // how often stars burst, 1 = normal
+    float  burstGain;     // how bright bursts are, 1 = normal
+    float  flashGain;     // how bright the nebula flash is, 1 = normal
+    float  realTime;      // plain clock in seconds (for random star events)
 };
 
 Texture2D<float4>       picture    : register(t0);
@@ -64,6 +69,46 @@ float Hash(uint n)
     return (n & 0xFFFFFFu) / 16777216.0;
 }
 
+// Smooth random value 0..1 that wanders over time. Unlike a sine wave it never
+// repeats, so there are no patterns to spot. Each seed gives a different path.
+float TimeNoise(float x, uint seed)
+{
+    float i = floor(x);
+    float f = x - i;
+    f = f * f * (3.0 - 2.0 * f);
+    uint k = (uint)i;
+    return lerp(Hash(k * 747796405u + seed), Hash((k + 1u) * 747796405u + seed), f);
+}
+
+// Random one-off events: time is cut into slots, and in each slot the event
+// happens with the given chance, at a random moment. Returns 0..1:
+// quick rise to 1, then a fall back to 0.
+float RandomEvent(uint seed, float slotLength, float chance, float riseTime, float fallTime)
+{
+    float slots = realTime / slotLength;
+    uint k = (uint)floor(slots);
+    float level = 0.0;
+    // This slot and the one before (an event late in the last slot may still be fading).
+    for (uint j = 0u; j < 2u; j++)
+    {
+        if (k < j)
+            break;
+        uint kk = k - j;
+        uint h = kk * 2654435761u ^ seed * 40503u;
+        if (Hash(h) < chance)
+        {
+            float age = realTime - (kk + Hash(h + 977u)) * slotLength;
+            if (age >= 0.0)
+            {
+                float v = age < riseTime ? smoothstep(0.0, 1.0, age / riseTime)
+                                         : exp(-(age - riseTime) / fallTime);
+                level = max(level, v);
+            }
+        }
+    }
+    return level;
+}
+
 // ---------------------------------------------------------------- step 1: stars
 
 struct StarVertex
@@ -87,25 +132,30 @@ StarVertex StarVS(uint id : SV_VertexID)
     float brightness = star.w;
 
     // Each star gets its own random speeds and timing.
-    float r0 = Hash(starId * 7u + 1u), r1 = Hash(starId * 7u + 2u), r2 = Hash(starId * 7u + 3u);
-    float r3 = Hash(starId * 7u + 4u), r4 = Hash(starId * 7u + 5u), r5 = Hash(starId * 7u + 6u);
+    float r0 = Hash(starId * 7u + 1u), r2 = Hash(starId * 7u + 3u), r4 = Hash(starId * 7u + 5u);
 
-    // "Activity" slowly comes and goes, so twinkling wanders around the sky
-    // instead of every star flickering at once.
-    float activity = pow(0.5 + 0.5 * sin(time * TAU / lerp(18.0, 45.0, r0) + r1 * TAU), 3.0);
-    // The twinkle itself: two gentle waves mixed together.
-    float wave = 0.6 * sin(time * TAU * lerp(0.2, 0.6, r2) + r3 * TAU)
-               + 0.4 * sin(time * TAU * lerp(0.5, 1.3, r4) + r5 * TAU);
+    // "Activity" wanders up and down, so twinkling moves around the sky
+    // instead of every star flickering at once (same amount as v0.1, but random timing).
+    float activity = pow(saturate((TimeNoise(time / lerp(9.0, 22.0, r0), starId * 3u + 11u) - 0.1) / 0.8), 3.0);
+    // The twinkle itself: two random wobbles, a slow one and a quicker one.
+    float wave = (TimeNoise(time * lerp(0.4, 0.9, r2), starId * 3u + 12u) * 2.0 - 1.0) * 1.1
+               + (TimeNoise(time * lerp(1.0, 2.2, r4), starId * 3u + 13u) * 2.0 - 1.0) * 0.6;
     float amount = twinkle * activity * wave;
 
-    // The brightest, biggest stars sometimes flash their spikes for a moment.
+    // The brightest, biggest stars now and then flash their spikes.
     bool canGlint = brightness > 0.9 && radius >= 7.0;
     float glint = 0.0;
     if (canGlint && twinkle > 0.0)
-    {
-        float period = lerp(35.0, 90.0, r1);
-        glint = pow(saturate(sin(time * TAU / period + r0 * TAU)), 80.0);
-    }
+        glint = RandomEvent(starId * 5u + 1u, 30.0, 0.5, 0.35, 0.7);
+
+    // A small share of stars give a quick bright burst: a fraction of a second
+    // up, then straight back to normal. On a 1080p screen about one every
+    // two seconds, each at a random star and a random moment.
+    float burst = 0.0;
+    if (burstRate > 0.0 && brightness > 0.6)
+        burst = RandomEvent(starId * 5u + 2u, 8.0, min(0.0012 * burstRate, 1.0), 0.06, 0.10) * burstGain;
+    glint = max(glint, burst);
+    amount += burst * 2.2;
 
     float core = max((radius * 2.5 + 2.0) * scale, 1.5);
     float quad = canGlint ? max(radius * 10.0 * scale, core) : core;
@@ -199,7 +249,7 @@ float Clouds(float2 p)
 // Direction the gas flows at a spot: swirls plus a slow drift outward.
 float2 Flow(float2 img)
 {
-    float2 p = img / 700.0 + float2(time * 0.004, 0.0);
+    float2 p = img / 700.0 + float2(nebulaTime * 0.004, 0.0);
     float e = 0.05;
     float n1 = Clouds(p + float2(0, e)), n2 = Clouds(p - float2(0, e));
     float n3 = Clouds(p + float2(e, 0)), n4 = Clouds(p - float2(e, 0));
@@ -241,7 +291,9 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         {
             const float period = 16.0;
             float2 flow = Flow(img) * 0.45 * nebula;          // picture pixels per second
-            float ph0 = frac(time / period), ph1 = frac(time / period + 0.5);
+            // Each area has its own timing so the whole nebula never "pulses" together.
+            float offset = Noise(img / 1800.0 + 3.7);
+            float ph0 = frac(nebulaTime / period + offset), ph1 = frac(nebulaTime / period + offset + 0.5);
             float3 a = SamplePicture(img - flow * ph0 * period);
             float3 b = SamplePicture(img - flow * ph1 * period);
             float3 moved = lerp(a, b, abs(ph0 - 0.5) * 2.0);
@@ -253,37 +305,44 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // 3. Passing dust shadows (in front of everything, so stars dim too).
         if (effects & EFFECT_SHADOWS)
         {
-            float2 p = img / 950.0 + float2(time * 0.010, time * -0.006);
+            float2 p = img / 950.0 + float2(nebulaTime * 0.010, nebulaTime * -0.006);
             float shade = smoothstep(0.50, 0.78, Clouds(p));
             color *= 1.0 - shade * 0.22 * nebula * wide;
         }
 
         // Gentle breathing glow (always on).
-        float breath = 0.5 + 0.5 * sin(time * TAU / 24.0);
+        float breath = TimeNoise(nebulaTime / 14.0, 101u);
         float glow = 0.06 * breath;
 
         // 2. Light echo: the central star brightens, and the light travels
         //    outward through the gas over about 14 seconds.
         if (effects & EFFECT_ECHO)
         {
-            float cycle = frac(time / 40.0);
-            float travel = saturate(cycle / 0.35);           // ring moves for 14 s, then rests
-            float ring = exp(-pow((d - travel * 2600.0) / 320.0, 2.0)) * (1.0 - travel) * step(cycle, 0.35);
-            float flash = exp(-cycle * 18.0) * exp(-d * d / (2.0 * 260.0 * 260.0));
-            glow += 0.30 * ring + 0.9 * flash;
+            float t = flashAge;                              // seconds since the flash
+            float travel = saturate(t / 14.0);               // ring moves outward for 14 s
+            float ring = exp(-pow((d - travel * 2600.0) / 320.0, 2.0)) * (1.0 - travel);
+            // The flash: a split-second peak that drops to about half within
+            // a fraction of a second, then fades back to normal over several seconds.
+            float rise = smoothstep(0.0, 0.06, t);
+            float flashLevel = rise * (0.5 * exp(-t / 0.12) + 0.5 * exp(-t / 5.0));
+            float flash = flashLevel * exp(-d * d / (2.0 * 260.0 * 260.0));
+            ring *= smoothstep(0.4, 2.0, t);                 // the wave starts after the flash
+            glow += (0.30 * ring + 0.9 * flash) * flashGain;
         }
         else
         {
-            float cycle = frac(time / 55.0);
-            glow += 0.10 * exp(-pow((d - cycle * 2400.0) / 260.0, 2.0)) * (1.0 - cycle);
+            float travel = saturate(flashAge / 20.0);       // just a faint wave, no flash
+            glow += 0.10 * exp(-pow((d - travel * 2400.0) / 260.0, 2.0)) * (1.0 - travel);
         }
-        color += gas * mask * nebula * glow;
+        // Add less light where the picture is already nearly white,
+        // so bright spots don't just turn into flat white.
+        color += gas * mask * nebula * glow * saturate(1.25 - Luma(color));
 
         // 4. Color shimmer: the blue glow drifts toward teal and back.
         if (effects & EFFECT_SHIMMER)
         {
-            float wave = Clouds(img / 1400.0 + time * 0.012) * 2.0 - 1.0;
-            float s = sin(time * TAU / 30.0) * 0.6 + wave * 0.6;
+            float wave = Clouds(img / 1400.0 + nebulaTime * 0.012) * 2.0 - 1.0;
+            float s = (TimeNoise(nebulaTime / 18.0, 102u) * 2.0 - 1.0) * 0.8 + wave * 0.6;
             color += gas * mask * nebula * s * float3(-0.10, 0.10, -0.02);
         }
 
@@ -292,8 +351,8 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         {
             float2 v = img - focusImage;
             float angle = Angle(v) / TAU + 0.5;        // 0..1 around the star
-            float beams = Noise(float2(angle * 40.0 + time * 0.02, 0.5));
-            beams = pow(beams, 4.0) * (0.6 + 0.4 * sin(time * TAU / 20.0 + angle * 30.0));
+            float beams = Noise(float2(angle * 40.0 + nebulaTime * 0.02, 0.5));
+            beams = pow(beams, 4.0) * (0.5 + 0.5 * Noise(float2(angle * 25.0, nebulaTime / 9.0)));
             float fall = exp(-d / 1100.0) * smoothstep(80.0, 400.0, d);
             color += float3(0.55, 0.72, 1.0) * beams * fall * 0.10 * nebula * saturate(wide * 2.0);
         }
@@ -303,8 +362,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         {
             [unroll] for (int i = 0; i < 8; i++)
             {
-                float period = 9.0 + i * 1.7;
-                float pulse = pow(0.5 + 0.5 * sin(time * TAU / period + i * 2.1), 6.0);
+                float pulse = pow(TimeNoise(nebulaTime / (5.0 + i * 0.9), 200u + (uint)i), 5.0) * 1.6;
                 float r = length(img - kNewStars[i]);
                 float spot = exp(-r * r / (2.0 * 28.0 * 28.0)) + 0.25 * exp(-r * r / (2.0 * 90.0 * 90.0));
                 color += float3(1.0, 0.86, 0.70) * spot * pulse * 0.35 * strength;

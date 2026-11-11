@@ -10,7 +10,10 @@
 
 #define IDD_SETTINGS      200
 #define IDC_LAYOUT        201
-#define IDC_TWINKLE       202
-#define IDC_NEBULA        203
 #define IDC_ZOOM          204
 #define IDC_CREDIT        205
+// Nebula effect checkboxes: IDC_EFFECT_FIRST + n is effect bit n.
+#define IDC_EFFECT_FIRST  210
+// Sliders: IDC_SLIDER_FIRST + n is slider n (enum Slider in settings.h).
+#define IDC_SLIDER_FIRST  220
+#define IDC_DEFAULTS      240

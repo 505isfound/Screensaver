@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstdlib>
+#include <random>
 #include <thread>
 #include <algorithm>
 #include "assets.h"
@@ -231,6 +232,9 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&start);
     bool uploaded = false;
+    std::mt19937 rng(GetTickCount() ^ GetCurrentProcessId());
+    float lastFlash = -1000.0f;
+    float nextFlash = 4.0f + 8.0f * (rng() / (float)rng.max());   // first one soon after start
 
     // For making preview videos on slow test computers: IRIS_TIME_SCALE=0.25
     // runs everything 4 times slower so the recording can be sped up smoothly.
@@ -240,8 +244,13 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
         timeScale = std::min(std::max((float)_wtof(scaleText), 0.01f), 10.0f);
 
     FrameSettings frame;
-    frame.twinkle = TwinkleStrength(settings);
-    frame.nebula = NebulaStrength(settings);
+    const Tuning tuning = GetTuning(settings);
+    frame.twinkle = tuning.twinkle;
+    frame.nebula = tuning.nebula;
+    frame.burstRate = tuning.burstRate;
+    frame.burstGain = tuning.burstGain;
+    frame.flashGain = tuning.flashGain;
+    float lastT = 0, starClock = 0, nebulaClock = 0;
     frame.effects = settings.effects;
 
     MSG msg = {};
@@ -282,7 +291,23 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
             // If loading failed we carry on and show a black screen.
         }
 
-        frame.time = t;
+        // The nebula flashes at random moments: on average every
+        // tuning.flashInterval seconds, anywhere from half to 1.5 times that.
+        if (tuning.flashInterval > 0 && t >= nextFlash)
+        {
+            lastFlash = nextFlash;
+            nextFlash = t + tuning.flashInterval * (0.5f + rng() / (float)rng.max());
+        }
+        frame.flashAge = t - lastFlash;
+
+        // Separate clocks so "speed" sliders change speed without jumps.
+        float dt = t - lastT;
+        lastT = t;
+        starClock += dt * tuning.twinkleSpeed;
+        nebulaClock += dt * tuning.effectSpeed;
+        frame.time = starClock;
+        frame.nebulaTime = nebulaClock;
+        frame.realTime = t;
         frame.fade = 1;
         frame.zoom = 1 + (framing.maxZoom - 1) * (0.5f - 0.5f * std::cos(t * 6.2831853f / kZoomSeconds));
         if (!renderer.Draw(frame))

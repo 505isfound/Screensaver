@@ -16,10 +16,19 @@
   (no black screen, no fade). A ready-made copy of the sized picture and the compiled shaders are
   cached in %LOCALAPPDATA%\Iris Nebula Screensaver.
 
-- 2026-11-11: Six optional nebula effects written (drifting gas, light echo, dust shadows, color
-  shimmer, light rays, newborn stars). Off by default, no setting yet: waiting for Keegan to pick.
+- 2026-11-11: Six nebula effects (drifting gas, light flash + echo, dust shadows, color shimmer,
+  light rays, newborn stars). Keegan picked all six: on by default, checkboxes in Settings.
+- 2026-11-11: Nebula flash: split-second peak, drops to ~50% almost at once, then fades back over
+  a few seconds. Then the light wave travels outward.
+- 2026-11-11: No repeating patterns (Keegan dislikes them): all timing uses random noise or random
+  events, never fixed cycles. Nebula flash every 26-78 s at random.
+- 2026-11-11: Star bursts: a small share of stars flash quickly and drop straight back. About one
+  every few seconds per 1080p screen. Twinkle amount unchanged from v0.1.
+- 2026-11-11: Settings use sliders (0-100, middle = normal) for twinkle amount/speed, burst
+  frequency/brightness, glow amount, effect speed, flash frequency/brightness. Defaults button.
 
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
 - 2026-11-11: Iris Nebula v0.2: instant start with the full picture (cache), no fade-in.
+- 2026-11-11: Iris Nebula v0.3: six nebula effects, random timing, star bursts, sliders.

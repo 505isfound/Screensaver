@@ -19,7 +19,12 @@ struct ViewConstants
     float nebula;
     float fade;
     uint32_t effects;
-    float padding[2];
+    float flashAge;
+    float nebulaTime;
+    float burstRate;
+    float burstGain;
+    float flashGain;
+    float realTime;
 };
 static_assert(sizeof(ViewConstants) % 16 == 0, "constant buffer size");
 
@@ -279,6 +284,12 @@ bool Renderer::Draw(const FrameSettings& frame)
                 c.nebula = frame.nebula;
                 c.fade = frame.fade;
                 c.effects = frame.effects;
+                c.flashAge = frame.flashAge;
+                c.nebulaTime = frame.nebulaTime;
+                c.burstRate = frame.burstRate;
+                c.burstGain = frame.burstGain;
+                c.flashGain = frame.flashGain;
+                c.realTime = frame.realTime;
                 memcpy(m.pData, &c, sizeof(c));
                 ctx_->Unmap(constants_, 0);
             }
@@ -294,7 +305,7 @@ bool Renderer::Draw(const FrameSettings& frame)
         ctx_->PSSetShaderResources(0, 4, none);
         ctx_->OMSetRenderTargets(1, &starTarget_, nullptr);
         ctx_->ClearRenderTargetView(starTarget_, zero);
-        if (starCount_ && frame.twinkle > 0)
+        if (starCount_ && (frame.twinkle > 0 || frame.burstRate * frame.burstGain > 0))
         {
             ID3D11ShaderResourceView* in[2] = { picture_, background_ };
             ctx_->PSSetShaderResources(0, 2, in);

@@ -5,12 +5,19 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 
 ## Settings
 
-| Setting | Choices | Default |
+| Setting | What it does | Default |
 |---|---|---|
-| Monitors | Automatic, one picture across all monitors, each monitor separately | Automatic |
-| Star twinkle | Gentle, Normal, Lively | Normal |
-| Nebula glow | Off, Subtle, Stronger | Subtle |
-| Slowly zoom in and out | on / off | off |
+| Monitors | Automatic, one picture across all monitors, or each monitor separately | Automatic |
+| Twinkle amount / speed | How much and how fast stars twinkle | middle |
+| Bursts: how often / brightness | Quick bright flashes of single random stars | middle |
+| Glow amount | Strength of all nebula effects (far left = off) | middle |
+| Effect speed | Speed of the gas drift, shadows, shimmer, rays and newborn stars | middle |
+| Flash: how often / brightness | The nebula's flash and the light wave that follows (far left = never) | middle |
+| Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, light rays, newborn stars | all on |
+| Slowly zoom in and out | Gentle zoom | off |
+
+Every slider's middle is the normal look. **Defaults** puts everything back.
+All timing is random (nothing repeats on a fixed cycle).
 
 **Automatic** shows one big picture when your monitors are all the same size and form a neat
 rectangle (like a 3 × 2 wall). Otherwise each monitor gets its own view. The nebula is always
@@ -26,8 +33,9 @@ centered on the main display (the one Windows marks as "main" in Display setting
   screensaver appears instantly with the full picture. Changing monitors makes a new copy.
   Deleting that folder is safe.
 - `src/shaders.hlsl` does the drawing on the graphics card: each star brightens and dims on its
-  own timing, the brightest ones sometimes flash their spikes, and the nebula gas slowly
-  "breathes" with a faint wave of light moving outward from the central star.
+  own random timing, a few stars give quick bright bursts, the brightest sometimes flash their
+  spikes, and the nebula has six effects (see Settings). The nebula's flash is timed randomly
+  by `src/main.cpp`.
 
 ## Picture credit
 

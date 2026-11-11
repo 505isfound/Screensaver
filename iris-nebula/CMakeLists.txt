@@ -17,7 +17,7 @@ add_executable(IrisNebula WIN32
 set_target_properties(IrisNebula PROPERTIES SUFFIX ".scr")
 target_compile_definitions(IrisNebula PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_include_directories(IrisNebula PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(IrisNebula PRIVATE d3d11 dxgi d3dcompiler windowscodecs ole32 advapi32 user32 gdi32)
+target_link_libraries(IrisNebula PRIVATE d3d11 dxgi d3dcompiler windowscodecs ole32 advapi32 user32 gdi32 comctl32)
 
 if(MINGW)
     # One self-contained file: no extra DLLs needed.
