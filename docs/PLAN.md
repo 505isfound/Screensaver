@@ -27,8 +27,12 @@
 - 2026-11-11: Settings use sliders (0-100, middle = normal) for twinkle amount/speed, burst
   frequency/brightness, glow amount, effect speed, flash frequency/brightness. Defaults button.
 
+- 2026-11-11: Nebula effects use grid-free "gradient noise" (turned per layer, slightly bent).
+  The earlier grid-based noise showed up as soft squares in the dust shadows on a big wall.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
 - 2026-11-11: Iris Nebula v0.2: instant start with the full picture (cache), no fade-in.
 - 2026-11-11: Iris Nebula v0.3: six nebula effects, random timing, star bursts, sliders.
+- 2026-11-11: v0.3.1: fixed square-looking dust shadows.

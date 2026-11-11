@@ -241,9 +241,36 @@ float Angle(float2 v)
     return r;
 }
 
+// Smooth random pattern without any visible grid: "gradient noise", with each
+// layer turned at a different angle so no straight lines or squares line up.
+float2 Gradient(float2 cell)
+{
+    float a = Hash2(cell) * TAU;
+    return float2(cos(a), sin(a));
+}
+
+float GradNoise(float2 p)
+{
+    float2 i = floor(p), f = frac(p);
+    float2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    float a = dot(Gradient(i), f);
+    float b = dot(Gradient(i + float2(1, 0)), f - float2(1, 0));
+    float c = dot(Gradient(i + float2(0, 1)), f - float2(0, 1));
+    float d = dot(Gradient(i + float2(1, 1)), f - float2(1, 1));
+    return 0.5 + 0.7 * lerp(lerp(a, b, u.x), lerp(c, d, u.x), u.y);   // about 0..1
+}
+
 float Clouds(float2 p)
 {
-    return (Noise(p) * 0.5 + Noise(p * 2.03 + 17.1) * 0.3 + Noise(p * 4.1 + 41.7) * 0.2);
+    // Bend the space a little first so shapes look like wisps, not blobs.
+    p += 0.35 * float2(GradNoise(p * 0.6 + 7.3), GradNoise(p * 0.6 + 21.9));
+    const float2x2 turn = float2x2(0.80, -0.60, 0.60, 0.80);   // about 37 degrees
+    float v = GradNoise(p) * 0.5;
+    p = mul(turn, p) * 2.03 + 17.1;
+    v += GradNoise(p) * 0.3;
+    p = mul(turn, p) * 2.01 + 41.7;
+    v += GradNoise(p) * 0.2;
+    return saturate(v);
 }
 
 // Direction the gas flows at a spot: swirls plus a slow drift outward.
@@ -292,7 +319,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             const float period = 16.0;
             float2 flow = Flow(img) * 0.45 * nebula;          // picture pixels per second
             // Each area has its own timing so the whole nebula never "pulses" together.
-            float offset = Noise(img / 1800.0 + 3.7);
+            float offset = GradNoise(img / 1800.0 + 3.7);
             float ph0 = frac(nebulaTime / period + offset), ph1 = frac(nebulaTime / period + offset + 0.5);
             float3 a = SamplePicture(img - flow * ph0 * period);
             float3 b = SamplePicture(img - flow * ph1 * period);
@@ -306,7 +333,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         if (effects & EFFECT_SHADOWS)
         {
             float2 p = img / 950.0 + float2(nebulaTime * 0.010, nebulaTime * -0.006);
-            float shade = smoothstep(0.50, 0.78, Clouds(p));
+            float shade = smoothstep(0.52, 0.85, Clouds(p));
             color *= 1.0 - shade * 0.22 * nebula * wide;
         }
 
