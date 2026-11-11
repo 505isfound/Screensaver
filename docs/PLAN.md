@@ -12,6 +12,11 @@
   copy, framed "zoomed out". Picture stays still by default; liveness comes mostly from star
   twinkle, plus a subtle nebula glow. Slow zoom is an optional setting (off by default).
 
+- 2026-11-11: Instant start: the screensaver window stays hidden until the first frame is ready
+  (no black screen, no fade). A ready-made copy of the sized picture and the compiled shaders are
+  cached in %LOCALAPPDATA%\Iris Nebula Screensaver.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
+- 2026-11-11: Iris Nebula v0.2: instant start with the full picture (cache), no fade-in.

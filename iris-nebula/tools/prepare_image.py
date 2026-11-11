@@ -34,7 +34,7 @@ def main(src):
     img = cv2.imread(src, cv2.IMREAD_COLOR)
     img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     h, w = img.shape[:2]
-    print("rotated size", w, h)
+    print("rotated size", w, h, "(update kImageWidth/kImageHeight in src/main.cpp if this changes)")
     cv2.imwrite(str(out / "iris.jpg"), img, [cv2.IMWRITE_JPEG_QUALITY, 93])
 
     # Starless background: shrink, remove small bright dots, smooth.

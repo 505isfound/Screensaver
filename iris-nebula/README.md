@@ -21,6 +21,10 @@ centered on the main display (the one Windows marks as "main" in Display setting
 - `tools/prepare_image.py` turns the original picture into the files in `assets/`:
   the picture rotated 90° clockwise, a star-free copy, and a list of ~140,000 stars.
 - Those files are packed inside `IrisNebula.scr`, so it is a single file.
+- The first start unpacks the big picture (a few seconds) and saves a ready-to-use copy sized for
+  your monitors in `%LOCALAPPDATA%\Iris Nebula Screensaver`. Later starts load that copy, so the
+  screensaver appears instantly with the full picture. Changing monitors makes a new copy.
+  Deleting that folder is safe.
 - `src/shaders.hlsl` does the drawing on the graphics card: each star brightens and dims on its
   own timing, the brightest ones sometimes flash their spikes, and the nebula gas slowly
   "breathes" with a faint wave of light moving outward from the central star.

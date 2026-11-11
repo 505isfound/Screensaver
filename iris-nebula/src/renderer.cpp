@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include <d3dcompiler.h>
+#include <cstdio>
 #include <cstring>
 #include <string>
 
@@ -32,8 +33,20 @@ Renderer::~Renderer()
     Free(backView_); Free(swap_); Free(ctx_); Free(device_);
 }
 
-static ID3DBlob* Compile(const std::string& src, const char* entry, const char* target)
+// Turns shader text into code for the graphics card. The result is saved in
+// the cache folder, so later starts skip this step.
+static std::vector<uint8_t> Compile(const std::string& src, const char* entry, const char* target)
 {
+    uint32_t hash = 2166136261u;  // FNV-1a hash of the shader text
+    for (char c : src)
+        hash = (hash ^ (uint8_t)c) * 16777619u;
+    wchar_t name[96];
+    swprintf(name, 96, L"shader-%hs-%08x.bin", entry, hash);
+
+    std::vector<uint8_t> bytes;
+    if (ReadCacheFile(name, &bytes) && !bytes.empty())
+        return bytes;
+
     ID3DBlob* code = nullptr;
     ID3DBlob* errors = nullptr;
     HRESULT hr = D3DCompile(src.data(), src.size(), "shaders.hlsl", nullptr, nullptr, entry, target,
@@ -43,7 +56,15 @@ static ID3DBlob* Compile(const std::string& src, const char* entry, const char* 
         OutputDebugStringA((const char*)errors->GetBufferPointer());
         errors->Release();
     }
-    return SUCCEEDED(hr) ? code : nullptr;
+    if (SUCCEEDED(hr) && code)
+    {
+        const uint8_t* p = (const uint8_t*)code->GetBufferPointer();
+        bytes.assign(p, p + code->GetBufferSize());
+        WriteCacheFile(name, bytes.data(), bytes.size());
+    }
+    if (code)
+        code->Release();
+    return bytes;
 }
 
 bool Renderer::Init(HWND window, UINT width, UINT height)
@@ -118,15 +139,15 @@ bool Renderer::Init(HWND window, UINT width, UINT height)
 
     // Shaders.
     std::string src = LoadShaderSource();
-    ID3DBlob* b;
-    if (!(b = Compile(src, "StarVS", "vs_5_0"))) return false;
-    device_->CreateVertexShader(b->GetBufferPointer(), b->GetBufferSize(), nullptr, &starVS_); b->Release();
-    if (!(b = Compile(src, "StarPS", "ps_5_0"))) return false;
-    device_->CreatePixelShader(b->GetBufferPointer(), b->GetBufferSize(), nullptr, &starPS_); b->Release();
-    if (!(b = Compile(src, "CompositeVS", "vs_5_0"))) return false;
-    device_->CreateVertexShader(b->GetBufferPointer(), b->GetBufferSize(), nullptr, &compVS_); b->Release();
-    if (!(b = Compile(src, "CompositePS", "ps_5_0"))) return false;
-    device_->CreatePixelShader(b->GetBufferPointer(), b->GetBufferSize(), nullptr, &compPS_); b->Release();
+    std::vector<uint8_t> b;
+    if ((b = Compile(src, "StarVS", "vs_5_0")).empty()) return false;
+    device_->CreateVertexShader(b.data(), b.size(), nullptr, &starVS_);
+    if ((b = Compile(src, "StarPS", "ps_5_0")).empty()) return false;
+    device_->CreatePixelShader(b.data(), b.size(), nullptr, &starPS_);
+    if ((b = Compile(src, "CompositeVS", "vs_5_0")).empty()) return false;
+    device_->CreateVertexShader(b.data(), b.size(), nullptr, &compVS_);
+    if ((b = Compile(src, "CompositePS", "ps_5_0")).empty()) return false;
+    device_->CreatePixelShader(b.data(), b.size(), nullptr, &compPS_);
     if (!starVS_ || !starPS_ || !compVS_ || !compPS_)
         return false;
 

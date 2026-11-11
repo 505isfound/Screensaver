@@ -16,6 +16,10 @@
 #include "settings.h"
 
 // --- Framing of the picture -------------------------------------------------
+// Size of assets/iris.jpg (printed by tools/prepare_image.py). Written here so
+// starting up doesn't have to open the big picture.
+static const float kImageWidth = 10711.0f;
+static const float kImageHeight = 10170.0f;
 // Nebula center (the bright star HD 200775) in iris.jpg pixels.
 static const float kFocusX = 5360.0f;
 static const float kFocusY = 5073.0f;
@@ -112,12 +116,6 @@ static HWND ParseWindow(const wchar_t* s)
     return (HWND)(UINT_PTR)wcstoull(s, nullptr, 10);
 }
 
-static float SmoothStep(float x)
-{
-    x = std::min(std::max(x, 0.0f), 1.0f);
-    return x * x * (3 - 2 * x);
-}
-
 static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
 {
     Settings settings = LoadSettings();
@@ -137,12 +135,9 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     const UINT width = std::max<LONG>(area.right - area.left, 1);
     const UINT height = std::max<LONG>(area.bottom - area.top, 1);
 
-    UINT imageW = 0, imageH = 0;
-    if (!PictureSize(&imageW, &imageH))
-        return 1;
     Framing framing;
-    framing.imageWidth = (float)imageW;
-    framing.imageHeight = (float)imageH;
+    framing.imageWidth = kImageWidth;
+    framing.imageHeight = kImageHeight;
     framing.focusX = kFocusX;
     framing.focusY = kFocusY;
     framing.rowsOnScreen = kRowsOnScreen;
@@ -165,23 +160,35 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     }
     else
     {
+        // Starts hidden: it only appears once the picture is ready,
+        // so the desktop switches straight to the full picture.
         g_closeOnInput = true;
         hwnd = CreateWindowExW(WS_EX_TOPMOST | WS_EX_TOOLWINDOW, wc.lpszClassName, L"Iris Nebula",
-                               WS_POPUP | WS_VISIBLE, area.left, area.top, width, height,
+                               WS_POPUP, area.left, area.top, width, height,
                                nullptr, nullptr, instance, nullptr);
     }
     if (!hwnd)
         return 1;
-    if (g_closeOnInput)
-    {
+
+    bool shown = mode == Mode::Preview;
+    auto show = [&] {
+        if (shown)
+            return;
+        shown = true;
+        ShowWindow(hwnd, SW_SHOW);
         SetForegroundWindow(hwnd);
         ShowCursor(FALSE);
-    }
+    };
+    // Any mouse or keyboard use while still loading means "stop".
+    LASTINPUTINFO lastInput = { sizeof(lastInput) };
+    GetLastInputInfo(&lastInput);
+    const DWORD inputAtStart = lastInput.dwTime;
 
     Renderer renderer;
     if (!renderer.Init(hwnd, width, height))
     {
         // Graphics failed: still behave like a (black) screensaver.
+        show();
         MSG msg;
         while (GetMessageW(&msg, nullptr, 0, 0) > 0)
         {
@@ -191,8 +198,7 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
         return 0;
     }
 
-    // Decide how sharp to load the picture, then load it in the background
-    // so the screen turns black right away and the picture fades in.
+    // Decide how sharp to load the picture, then load it in the background.
     double tw = layout.texWidth * layout.texDetail, th = layout.texHeight * layout.texDetail;
     double shrink = std::min({ 1.0, kMaxTextureSide / tw, kMaxTextureSide / th,
                                std::sqrt(kMaxTexturePixels / (tw * th)) });
@@ -202,9 +208,19 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     Loaded loaded;
     std::thread loader([&] {
         CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-        bool ok = LoadPicturePart(layout.texLeft, layout.texTop, layout.texWidth, layout.texHeight,
-                                  texW, texH, &loaded.picture) &&
-                  LoadBackground(&loaded.background);
+        // Use the ready-made copy from last time if it matches this setup;
+        // otherwise unpack the big picture (slow) and save a copy for next time.
+        PictureCacheKey key = { layout.texLeft, layout.texTop, layout.texWidth, layout.texHeight, texW, texH };
+        const wchar_t* slot = mode == Mode::Preview ? L"preview" : L"screen";
+        bool ok = LoadCachedPicture(slot, key, &loaded.picture);
+        if (!ok)
+        {
+            ok = LoadPicturePart(layout.texLeft, layout.texTop, layout.texWidth, layout.texHeight,
+                                 texW, texH, &loaded.picture);
+            if (ok)
+                SaveCachedPicture(slot, key, loaded.picture);
+        }
+        ok = ok && LoadBackground(&loaded.background);
         if (ok)
             LoadStars(&loaded.stars);  // no stars is fine: just no twinkle
         loaded.state = ok ? 1 : -1;
@@ -214,7 +230,6 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     LARGE_INTEGER freq, start, now;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&start);
-    float readyAt = -1;
     bool uploaded = false;
 
     FrameSettings frame;
@@ -238,19 +253,32 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
         QueryPerformanceCounter(&now);
         float t = (float)((now.QuadPart - start.QuadPart) / (double)freq.QuadPart);
 
-        if (!uploaded && loaded.state == 1)
+        if (!uploaded)
         {
-            uploaded = renderer.Upload(loaded.picture, loaded.background, loaded.stars, layout, framing);
-            loaded.picture.bgra = {};
-            loaded.background.bgra = {};
-            readyAt = t;
+            if (loaded.state == 1)
+            {
+                uploaded = renderer.Upload(loaded.picture, loaded.background, loaded.stars, layout, framing);
+                loaded.picture.bgra = {};
+                loaded.background.bgra = {};
+                if (!uploaded)
+                    loaded.state = -1;
+            }
+            if (loaded.state == 0)
+            {
+                if (g_closeOnInput && GetLastInputInfo(&lastInput) && lastInput.dwTime != inputAtStart)
+                    break;
+                Sleep(5);
+                continue;
+            }
+            // If loading failed we carry on and show a black screen.
         }
 
         frame.time = t;
-        frame.fade = readyAt < 0 ? 0 : SmoothStep((t - readyAt) / 2.5f);
+        frame.fade = 1;
         frame.zoom = 1 + (framing.maxZoom - 1) * (0.5f - 0.5f * std::cos(t * 6.2831853f / kZoomSeconds));
         if (!renderer.Draw(frame))
             DestroyWindow(hwnd);   // graphics card was reset: just close
+        show();                    // after the first finished frame
     }
 
     loader.join();
