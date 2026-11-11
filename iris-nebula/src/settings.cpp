@@ -24,6 +24,7 @@ Settings LoadSettings()
     s.twinkle = (int)std::min<DWORD>(ReadNumber(L"Twinkle", 1), 2);
     s.nebula = (int)std::min<DWORD>(ReadNumber(L"NebulaGlow", 1), 2);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
+    s.effects = ReadNumber(L"NebulaEffects", 0) & 63;
     return s;
 }
 

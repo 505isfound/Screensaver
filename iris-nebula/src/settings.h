@@ -11,6 +11,7 @@ struct Settings
     int  twinkle = 1;     // 0 gentle, 1 normal, 2 lively
     int  nebula = 1;      // 0 off, 1 subtle, 2 stronger
     bool slowZoom = false;
+    DWORD effects = 0;    // nebula effects, see EFFECT_... in shaders.hlsl (no UI yet)
 };
 
 Settings LoadSettings();

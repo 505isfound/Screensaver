@@ -232,9 +232,17 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     QueryPerformanceCounter(&start);
     bool uploaded = false;
 
+    // For making preview videos on slow test computers: IRIS_TIME_SCALE=0.25
+    // runs everything 4 times slower so the recording can be sped up smoothly.
+    float timeScale = 1.0f;
+    wchar_t scaleText[32];
+    if (GetEnvironmentVariableW(L"IRIS_TIME_SCALE", scaleText, 32) > 0)
+        timeScale = std::min(std::max((float)_wtof(scaleText), 0.01f), 10.0f);
+
     FrameSettings frame;
     frame.twinkle = TwinkleStrength(settings);
     frame.nebula = NebulaStrength(settings);
+    frame.effects = settings.effects;
 
     MSG msg = {};
     bool running = true;
@@ -252,6 +260,7 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
 
         QueryPerformanceCounter(&now);
         float t = (float)((now.QuadPart - start.QuadPart) / (double)freq.QuadPart);
+        t *= timeScale;
 
         if (!uploaded)
         {

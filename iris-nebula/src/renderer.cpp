@@ -18,7 +18,8 @@ struct ViewConstants
     float twinkle;
     float nebula;
     float fade;
-    float padding[3];
+    uint32_t effects;
+    float padding[2];
 };
 static_assert(sizeof(ViewConstants) % 16 == 0, "constant buffer size");
 
@@ -277,6 +278,7 @@ bool Renderer::Draw(const FrameSettings& frame)
                 c.twinkle = frame.twinkle;
                 c.nebula = frame.nebula;
                 c.fade = frame.fade;
+                c.effects = frame.effects;
                 memcpy(m.pData, &c, sizeof(c));
                 ctx_->Unmap(constants_, 0);
             }

@@ -13,6 +13,7 @@ struct FrameSettings
     float nebula = 0;    // strength
     float fade = 1;      // 0..1
     float zoom = 1;      // 1 = normal framing
+    unsigned effects = 0; // nebula effects (EFFECT_... in shaders.hlsl)
 };
 
 class Renderer

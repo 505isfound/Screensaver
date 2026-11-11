@@ -16,6 +16,9 @@
   (no black screen, no fade). A ready-made copy of the sized picture and the compiled shaders are
   cached in %LOCALAPPDATA%\Iris Nebula Screensaver.
 
+- 2026-11-11: Six optional nebula effects written (drifting gas, light echo, dust shadows, color
+  shimmer, light rays, newborn stars). Off by default, no setting yet: waiting for Keegan to pick.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).

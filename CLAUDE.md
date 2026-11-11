@@ -22,3 +22,8 @@ Keegan's Windows screensavers. Claude writes all the code. Keep it human-readabl
 The build works on Linux with mingw-w64. Wine + Xvfb can run it for screenshots
 (`wine IrisNebula.scr /s`). Wine's shader compiler is stricter than Windows', which is why the star
 list is stored in a texture and stars are drawn without instancing.
+
+Preview videos: set `IRIS_TIME_SCALE=0.25` so the emulator runs 4× slower, record with
+`ffmpeg -f x11grab`, then speed the recording up 4× (`setpts=PTS/4`). Nebula effects can be
+switched on for testing with the registry value `NebulaEffects` (bits, see `EFFECT_...` in
+`src/shaders.hlsl`).
