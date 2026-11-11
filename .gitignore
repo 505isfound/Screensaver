@@ -1,0 +1,4 @@
+build/
+*.scr
+*.exe
+__pycache__/

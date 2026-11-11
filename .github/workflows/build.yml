@@ -1,0 +1,42 @@
+# Builds the screensavers on GitHub's computers.
+# Every push: the .scr files are attached to the run (Actions tab > run > Artifacts).
+# Pushes to main also update the "Latest build" release, which has a plain download link.
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Windows compiler
+        run: sudo apt-get update && sudo apt-get install -y g++-mingw-w64-x86-64 cmake
+
+      - name: Build Iris Nebula
+        run: |
+          cmake -S iris-nebula -B build/iris-nebula -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_TOOLCHAIN_FILE=$PWD/cmake/mingw-w64.cmake
+          cmake --build build/iris-nebula -j
+          mkdir -p out && cp build/iris-nebula/IrisNebula.scr out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screensavers
+          path: out/*.scr
+
+      - name: Update "Latest build" release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest out/*.scr --title "Latest build" --target "$GITHUB_SHA" \
+            --notes "Built from $(git log -1 --format=%h): $(git log -1 --format=%s)"
