@@ -30,3 +30,12 @@ centered on the main display (the one Windows marks as "main" in Display setting
 NASA, ESA and Digitized Sky Survey 2. Acknowledgment: Davide De Martin (ESA/Hubble).
 Source: [ESA/Hubble heic0915b](https://esahubble.org/images/heic0915b/), used under ESA/Hubble's
 image terms (CC BY 4.0 with visible credit). The credit is also shown in the screensaver's Settings.
+
+## Wallpapers
+
+Pictures that line up exactly with the screensaver, so the desktop and screensaver match:
+
+- [Triple 1080p monitors (5760 × 1080)](wallpapers/iris-nebula-triple-5760x1080.jpg): nebula on the middle screen.
+  In Windows: right-click the desktop → Personalize → Background → pick the file → "Span".
+
+Same picture credit as above.

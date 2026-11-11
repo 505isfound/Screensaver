@@ -14,3 +14,4 @@
 
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
+- 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
