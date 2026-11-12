@@ -9,7 +9,7 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 |---|---|---|
 | Monitors | Automatic, one picture across all monitors, or each monitor separately | Automatic |
 | Twinkle amount / speed | How much and how fast stars twinkle | middle |
-| Bursts: how often / brightness | Now and then a random star builds up, pops with spikes and a ring of light, then settles | middle |
+| Bursts: how often / brightness | Now and then a random star builds up, pops with a glow and spikes, then settles | middle |
 | Glow amount | Strength of all nebula effects (far left = off) | middle |
 | Effect speed | Speed of the gas drift, shadows, shimmer, rays and newborn stars | middle |
 | Flash: how often / brightness | The nebula's flash and the light wave that follows (far left = never) | middle |

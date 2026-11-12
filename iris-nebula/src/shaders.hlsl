@@ -139,7 +139,7 @@ float EventAge(uint seed, float slotLength, float chance, float duration)
 // Star burst timeline (seconds after it starts):
 //   0.0 - 1.0   build-up: the star brightens and flickers faster and faster
 //   1.0 - 1.12  a short dip, like a breath in
-//   1.12        pop: big glow, four spikes shooting out, a ring of light
+//   1.12        pop: big glow and four spikes shooting out
 //   to 2.4      afterglow fades back to the normal star
 static const float kBurstLength = 2.4;
 static const float kPopAt = 1.12;
@@ -152,7 +152,7 @@ struct StarVertex
     float  quadSize  : QUAD;       // drawn square half-size on screen
     float  amount    : AMOUNT;     // brighten/dim the star itself: -1..+1 or more
     float  glint     : GLINT;      // spike flash of big stars: 0..1
-    float4 burst     : BURST;      // pop glow, spike length (px), ring radius (px), ring strength
+    float2 burst     : BURST;      // pop glow, spike length (px)
     float4 tint      : TINT;       // color of the burst light; w = how big it is
 };
 
@@ -185,7 +185,7 @@ StarVertex StarVS(uint id : SV_VertexID)
 
     // Star bursts: rare, at random stars and random moments.
     // About one every 8-10 seconds on a 1080p screen at the normal setting.
-    float4 burst = 0.0;
+    float2 burst = 0.0;
     float size = 0.0;
     float age = -1.0;
     if (burstRate > 0.0 && burstGain > 0.0 && brightness > 0.7)
@@ -213,8 +213,6 @@ StarVertex StarVS(uint id : SV_VertexID)
             amount = (2.5 * exp(-p / 0.35)) * pop * burstGain;
             burst.x = 1.6 * exp(-p / 0.22) * pop * burstGain;            // glow
             burst.y = (14.0 + 70.0 * saturate(p / 0.15)) * exp(-p / 0.45) * size; // spikes shoot out, then shrink
-            burst.z = 4.0 + 60.0 * size * sqrt(saturate(p / 0.9));         // ring grows
-            burst.w = 0.9 * exp(-p / 0.35) * pop * burstGain;              // and fades
         }
     }
 
@@ -264,7 +262,7 @@ float4 StarPS(StarVertex v) : SV_Target
     float gain = v.amount * coreFade + v.glint * 1.4 * spikeFade;
     float3 light = starOnly * gain * calm;
 
-    // Extra light drawn for a burst (glow, four spikes, ring).
+    // Extra light drawn for a burst (glow and four spikes).
     if (v.tint.w > 0.0)
     {
         float s = v.tint.w;
@@ -274,9 +272,8 @@ float4 StarPS(StarVertex v) : SV_Target
         float spikeLen = max(v.burst.y, 1.0);
         float spikes = exp(-d.y * d.y / 1.2) * exp(-abs(d.x) / spikeLen)
                      + exp(-d.x * d.x / 1.2) * exp(-abs(d.y) / spikeLen);
-        float ring = exp(-Sq((dist - v.burst.z) / (1.6 * s))) * v.burst.w;
         float edge = saturate(1.0 - dist / v.quadSize);   // fade out before the square's edge
-        light += v.tint.rgb * (v.burst.x * glow + 0.8 * v.burst.x * spikes + 0.45 * ring) * edge
+        light += v.tint.rgb * (v.burst.x * glow + 0.8 * v.burst.x * spikes) * edge
                  * (0.4 + 0.6 * calm);
     }
     return float4(light, 0.0);

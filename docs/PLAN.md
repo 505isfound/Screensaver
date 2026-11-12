@@ -38,6 +38,8 @@
 - 2026-11-12: Version number shown in the Settings window title (src/version.h). Work now goes to
   main, so each update appears on the Releases page as "Latest build".
 
+- 2026-11-12: Removed the ring from star bursts (Keegan: not wanted).
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -45,3 +47,4 @@
 - 2026-11-11: Iris Nebula v0.3: six nebula effects, random timing, star bursts, sliders.
 - 2026-11-11: v0.3.1: fixed square-looking dust shadows.
 - 2026-11-12: v0.4: new star bursts.
+- 2026-11-12: v0.4.1: no ring on star bursts.
