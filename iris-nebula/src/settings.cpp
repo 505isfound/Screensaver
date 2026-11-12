@@ -44,13 +44,16 @@ Settings LoadSettings()
         for (int i = 0; i < SliderCount; i++)
             s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
-    s.effects = ReadNumber(L"NebulaEffects", 63) & 63;
+    s.effects = ReadNumber(L"NebulaEffects", kAllEffects) & kAllEffects;
+    // The storm effects (bits 6-10) are new in settings version 3: switch them on.
+    if (ReadNumber(L"SettingsVersion", 1) < 3)
+        s.effects |= kAllEffects & ~63u;
     return s;
 }
 
 void SaveSettings(const Settings& s)
 {
-    WriteNumber(L"SettingsVersion", 2);
+    WriteNumber(L"SettingsVersion", 3);
     WriteNumber(L"Layout", (DWORD)s.layout);
     WriteNumber(L"Placement", (DWORD)s.placement);
     for (int i = 0; i < SliderCount; i++)
@@ -135,7 +138,7 @@ static void ShowSettings(HWND dlg, const Settings& s)
         SendMessageW(slider, TBM_SETPOS, TRUE, s.sliders[i]);
         ShowPercent(dlg, i);
     }
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < kEffectCount; i++)
         CheckDlgButton(dlg, IDC_EFFECT_FIRST + i, (s.effects >> i) & 1 ? BST_CHECKED : BST_UNCHECKED);
     CheckDlgButton(dlg, IDC_ZOOM, s.slowZoom ? BST_CHECKED : BST_UNCHECKED);
 }
@@ -150,7 +153,7 @@ static Settings ReadDialog(HWND dlg)
     for (int i = 0; i < SliderCount; i++)
         s.sliders[i] = (int)SendDlgItemMessageW(dlg, IDC_SLIDER_FIRST + i, TBM_GETPOS, 0, 0);
     s.effects = 0;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < kEffectCount; i++)
         if (IsDlgButtonChecked(dlg, IDC_EFFECT_FIRST + i) == BST_CHECKED)
             s.effects |= 1u << i;
     s.slowZoom = IsDlgButtonChecked(dlg, IDC_ZOOM) == BST_CHECKED;

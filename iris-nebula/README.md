@@ -15,6 +15,7 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 | Effect speed | Speed of the gas drift, shadows, shimmer, rays and newborn stars | middle |
 | Flash: how often / brightness | The nebula's flash and the light wave that follows (far left = never) | middle |
 | Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, light rays, newborn stars | all on |
+| Storm effects | Lightning, storm cells, churning gas, pulses along the strands, crackle | all on |
 | Slowly zoom in and out | Gentle zoom | off |
 
 Every slider shows a percentage. 100% (the middle) is Keegan's chosen look, so each slider can go less or more from there. **Defaults** puts everything back.

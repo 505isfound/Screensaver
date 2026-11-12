@@ -64,6 +64,13 @@
   position: GetTuning scales from his values. Settings version 2 ignores older saved slider
   positions (their meaning changed).
 
+- 2026-11-12: Five storm effects, each a checkbox (all on): lightning inside the gas (random,
+  in busy and quiet spells, often double flashes), storm cells (4 wandering busy areas), churning
+  gas (small fast boiling in the bright gas), pulses along the strands, and crackle (tiny jagged
+  sparks along gas edges). Settings version 3 switches them on for existing installs.
+- 2026-11-12: Fixed dark dots on dimming stars: dimming now covers the whole star (including the
+  spikes on spiky stars) evenly, and never removes more than 70% of the star's light.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -78,3 +85,4 @@
 - 2026-11-12: v0.5.3: match-wallpaper placement corrected to Windows' real Span behaviour.
 - 2026-11-12: v0.6: Keegan's defaults; no cross on nebula flash; no purple shimmer.
 - 2026-11-12: v0.6.1: slider middles = Keegan's look.
+- 2026-11-12: v0.7: storm effects; fixed dark dots on dimming stars.

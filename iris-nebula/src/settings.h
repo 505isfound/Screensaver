@@ -19,6 +19,10 @@ enum Slider
     SliderCount
 };
 
+// Number of effect checkboxes (bits in Settings::effects).
+const int kEffectCount = 11;
+const DWORD kAllEffects = (1u << kEffectCount) - 1;
+
 struct Settings
 {
     // Defaults are Keegan's picks (2026-11-12). Every slider's middle (50) is "100%",
@@ -27,7 +31,7 @@ struct Settings
     int  placement = 1;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
     int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50 };
     bool slowZoom = false;
-    DWORD effects = 63;   // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
+    DWORD effects = kAllEffects;  // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
 };
 
 // What the sliders mean for the drawing code.
