@@ -92,7 +92,21 @@ Layout BuildLayout(const std::vector<Monitor>& monitors, LayoutMode mode, const 
         return layout;
 
     bool span = mode == LayoutMode::Span || (mode == LayoutMode::Auto && IsNeatGrid(monitors));
-    if (span)
+    if (f.wallWidth > 0 && f.wallHeight > 0)
+    {
+        // Same math as Windows' "Span": fill the box around all monitors,
+        // keeping the shape, centered.
+        RECT box = Bounds(monitors);
+        float boxW = (float)(box.right - box.left), boxH = (float)(box.bottom - box.top);
+        View v;
+        v.rect = box;
+        v.scale = std::max(boxW / f.wallWidth, boxH / f.wallHeight);
+        float centerX = box.left + boxW * 0.5f, centerY = box.top + boxH * 0.5f;
+        v.focusX = centerX + (f.focusX - (f.wallLeft + f.wallWidth * 0.5f)) * v.scale;
+        v.focusY = centerY + (f.focusY - (f.wallTop + f.wallHeight * 0.5f)) * v.scale;
+        layout.views.push_back(v);
+    }
+    else if (span)
     {
         const Monitor* main = &monitors[0];
         for (const auto& m : monitors)

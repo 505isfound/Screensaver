@@ -143,6 +143,14 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     framing.focusY = kFocusY;
     framing.rowsOnScreen = kRowsOnScreen;
     framing.maxZoom = settings.slowZoom ? kZoomAmount : 1.0f;
+    if (settings.placement > 0)
+    {
+        const WallpaperMatch& w = kWallpapers[settings.placement - 1];
+        framing.wallLeft = w.left;
+        framing.wallTop = w.top;
+        framing.wallWidth = w.width;
+        framing.wallHeight = w.height;
+    }
     Layout layout = BuildLayout(monitors, mode == Mode::Preview ? LayoutMode::EachScreen : settings.layout, framing);
 
     // Window.

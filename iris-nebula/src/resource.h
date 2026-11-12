@@ -10,6 +10,7 @@
 
 #define IDD_SETTINGS      200
 #define IDC_LAYOUT        201
+#define IDC_PLACEMENT     206
 #define IDC_ZOOM          204
 #define IDC_CREDIT        205
 // Nebula effect checkboxes: IDC_EFFECT_FIRST + n is effect bit n.

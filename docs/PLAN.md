@@ -40,6 +40,11 @@
 
 - 2026-11-12: Removed the ring from star bursts (Keegan: not wanted).
 
+- 2026-11-12: "Picture position" setting: nebula centered on the main screen (default), or match
+  a wallpaper exactly. Matching copies Windows' Span math (fill the box around all monitors,
+  keep the shape, crop equally). Wallpapers listed in settings.cpp (kWallpapers) with the part of
+  iris.jpg each shows. Keegan's home: 5120x1440 ultrawide + 2560x1440 centered above, Full picture.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -48,3 +53,4 @@
 - 2026-11-11: v0.3.1: fixed square-looking dust shadows.
 - 2026-11-12: v0.4: new star bursts.
 - 2026-11-12: v0.4.1: no ring on star bursts.
+- 2026-11-12: v0.5: Picture position / match wallpaper; full-picture wallpaper added.

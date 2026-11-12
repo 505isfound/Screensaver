@@ -34,6 +34,11 @@ struct Framing
     float focusX, focusY;     // nebula center in image pixels
     float rowsOnScreen;       // image pixels shown across a screen's short side
     float maxZoom;            // 1 = no zoom; >1 leaves room for slow zoom
+
+    // "Match my wallpaper": when wallWidth > 0, the picture is placed the way
+    // Windows' "Span" wallpaper setting places this part of it (image pixels):
+    // stretched evenly to fill all monitors, extra cut off equally on both sides.
+    float wallLeft = 0, wallTop = 0, wallWidth = 0, wallHeight = 0;
 };
 
 // True when the monitors are all the same size and form a neat rectangle.

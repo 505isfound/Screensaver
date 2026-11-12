@@ -7,6 +7,12 @@
 
 static const wchar_t* kKey = L"Software\\Iris Nebula Screensaver";
 
+const WallpaperMatch kWallpapers[] = {
+    { L"Match wallpaper: Full picture (10711 x 7712)", 0, 0, 10711, 7712 },
+    { L"Match wallpaper: Triple 1080p (5760 x 1080)", 752, 4209, 9216, 1728 },
+};
+const int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[0]);
+
 // Registry names of the sliders, in the same order as enum Slider.
 static const wchar_t* kSliderNames[SliderCount] = {
     L"TwinkleAmount", L"TwinkleSpeed", L"BurstFrequency", L"BurstBrightness",
@@ -30,6 +36,7 @@ Settings LoadSettings()
 {
     Settings s;
     s.layout = (LayoutMode)std::min<DWORD>(ReadNumber(L"Layout", 0), 2);
+    s.placement = (int)std::min<DWORD>(ReadNumber(L"Placement", 0), (DWORD)kWallpaperCount);
     for (int i = 0; i < SliderCount; i++)
         s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
@@ -40,6 +47,7 @@ Settings LoadSettings()
 void SaveSettings(const Settings& s)
 {
     WriteNumber(L"Layout", (DWORD)s.layout);
+    WriteNumber(L"Placement", (DWORD)s.placement);
     for (int i = 0; i < SliderCount; i++)
         WriteNumber(kSliderNames[i], (DWORD)s.sliders[i]);
     WriteNumber(L"SlowZoom", s.slowZoom ? 1 : 0);
@@ -78,6 +86,10 @@ static void ShowSettings(HWND dlg, const Settings& s)
 {
     const wchar_t* layouts[] = { L"Automatic", L"One picture across all monitors", L"Each monitor separately" };
     FillCombo(dlg, IDC_LAYOUT, layouts, 3, (int)s.layout);
+    const wchar_t* places[8] = { L"Nebula centered on main screen" };
+    for (int i = 0; i < kWallpaperCount && i < 7; i++)
+        places[i + 1] = kWallpapers[i].name;
+    FillCombo(dlg, IDC_PLACEMENT, places, kWallpaperCount + 1, s.placement);
     for (int i = 0; i < SliderCount; i++)
     {
         HWND slider = GetDlgItem(dlg, IDC_SLIDER_FIRST + i);
@@ -96,6 +108,8 @@ static Settings ReadDialog(HWND dlg)
     Settings s;
     LRESULT layout = SendDlgItemMessageW(dlg, IDC_LAYOUT, CB_GETCURSEL, 0, 0);
     s.layout = (LayoutMode)(layout < 0 ? 0 : layout);
+    LRESULT place = SendDlgItemMessageW(dlg, IDC_PLACEMENT, CB_GETCURSEL, 0, 0);
+    s.placement = (int)(place < 0 ? 0 : place);
     for (int i = 0; i < SliderCount; i++)
         s.sliders[i] = (int)SendDlgItemMessageW(dlg, IDC_SLIDER_FIRST + i, TBM_GETPOS, 0, 0);
     s.effects = 0;

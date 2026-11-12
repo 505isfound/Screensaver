@@ -22,6 +22,7 @@ enum Slider
 struct Settings
 {
     LayoutMode layout = LayoutMode::Auto;
+    int  placement = 0;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
     int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50 };
     bool slowZoom = false;
     DWORD effects = 63;   // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
@@ -39,6 +40,15 @@ struct Tuning
     float flashInterval;  // average seconds between nebula flashes (0 = never)
     float flashGain;      // how bright a flash is, 1 = normal
 };
+
+// Wallpapers the screensaver can line up with (iris-nebula/wallpapers/).
+struct WallpaperMatch
+{
+    const wchar_t* name;
+    float left, top, width, height;   // part of iris.jpg the wallpaper shows
+};
+extern const WallpaperMatch kWallpapers[];
+extern const int kWallpaperCount;
 
 Settings LoadSettings();
 void SaveSettings(const Settings& s);

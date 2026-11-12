@@ -15,41 +15,43 @@ IDR_BACKGROUND  RCDATA "assets/background.png"
 IDR_STARS       RCDATA "assets/stars.bin"
 IDR_SHADERS     RCDATA "src/shaders.hlsl"
 
-IDD_SETTINGS DIALOGEX 0, 0, 260, 347
+IDD_SETTINGS DIALOGEX 0, 0, 260, 367
 STYLE DS_MODALFRAME | DS_CENTER | DS_SHELLFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Iris Nebula Settings"
 FONT 9, "Segoe UI"
 BEGIN
     LTEXT           "Monitors:", -1, 10, 12, 70, 10
     COMBOBOX        IDC_LAYOUT, 100, 10, 150, 60, CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "Stars", -1, 10, 36, 120, 10
-    LTEXT           "Twinkle amount", -1, 18, 52, 82, 10
-    CONTROL         "", 220, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 48, 150, 16
-    LTEXT           "Twinkle speed", -1, 18, 70, 82, 10
-    CONTROL         "", 221, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 66, 150, 16
-    LTEXT           "Bursts: how often", -1, 18, 88, 82, 10
-    CONTROL         "", 222, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 84, 150, 16
-    LTEXT           "Bursts: brightness", -1, 18, 106, 82, 10
-    CONTROL         "", 223, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 102, 150, 16
-    LTEXT           "Nebula", -1, 10, 122, 120, 10
-    LTEXT           "Glow amount", -1, 18, 138, 82, 10
-    CONTROL         "", 224, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 134, 150, 16
-    LTEXT           "Effect speed", -1, 18, 156, 82, 10
-    CONTROL         "", 225, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 152, 150, 16
-    LTEXT           "Flash: how often", -1, 18, 174, 82, 10
-    CONTROL         "", 226, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 170, 150, 16
-    LTEXT           "Flash: brightness", -1, 18, 192, 82, 10
-    CONTROL         "", 227, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 188, 150, 16
-    LTEXT           "Nebula effects:", -1, 10, 212, 80, 10
-    AUTOCHECKBOX    "Drifting gas", 210, 18, 224, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Light flash and echo", 211, 138, 224, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Passing dust shadows", 212, 18, 237, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Color shimmer", 213, 138, 237, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Light rays", 214, 18, 250, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Newborn stars", 215, 138, 250, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Slowly zoom in and out", IDC_ZOOM, 18, 267, 200, 12, WS_TABSTOP
-    LTEXT           "Picture: Iris Nebula (NGC 7023).\nCredit: NASA, ESA and Digitized Sky Survey 2.\nAcknowledgment: Davide De Martin (ESA/Hubble).", IDC_CREDIT, 10, 287, 240, 30
-    PUSHBUTTON      "Defaults", IDC_DEFAULTS, 10, 323, 50, 16
-    DEFPUSHBUTTON   "OK", IDOK, 146, 323, 50, 16
-    PUSHBUTTON      "Cancel", IDCANCEL, 200, 323, 50, 16
+    LTEXT           "Picture position:", -1, 10, 32, 85, 10
+    COMBOBOX        IDC_PLACEMENT, 100, 30, 150, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Stars", -1, 10, 56, 120, 10
+    LTEXT           "Twinkle amount", -1, 18, 72, 82, 10
+    CONTROL         "", 220, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 68, 150, 16
+    LTEXT           "Twinkle speed", -1, 18, 90, 82, 10
+    CONTROL         "", 221, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 86, 150, 16
+    LTEXT           "Bursts: how often", -1, 18, 108, 82, 10
+    CONTROL         "", 222, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 104, 150, 16
+    LTEXT           "Bursts: brightness", -1, 18, 126, 82, 10
+    CONTROL         "", 223, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 122, 150, 16
+    LTEXT           "Nebula", -1, 10, 142, 120, 10
+    LTEXT           "Glow amount", -1, 18, 158, 82, 10
+    CONTROL         "", 224, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 154, 150, 16
+    LTEXT           "Effect speed", -1, 18, 176, 82, 10
+    CONTROL         "", 225, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 172, 150, 16
+    LTEXT           "Flash: how often", -1, 18, 194, 82, 10
+    CONTROL         "", 226, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 190, 150, 16
+    LTEXT           "Flash: brightness", -1, 18, 212, 82, 10
+    CONTROL         "", 227, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 208, 150, 16
+    LTEXT           "Nebula effects:", -1, 10, 232, 80, 10
+    AUTOCHECKBOX    "Drifting gas", 210, 38, 224, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Light flash and echo", 211, 158, 224, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Passing dust shadows", 212, 38, 237, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Color shimmer", 213, 158, 237, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Light rays", 214, 38, 250, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Newborn stars", 215, 158, 250, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Slowly zoom in and out", IDC_ZOOM, 18, 287, 200, 12, WS_TABSTOP
+    LTEXT           "Picture: Iris Nebula (NGC 7023).\nCredit: NASA, ESA and Digitized Sky Survey 2.\nAcknowledgment: Davide De Martin (ESA/Hubble).", IDC_CREDIT, 10, 307, 240, 30
+    PUSHBUTTON      "Defaults", IDC_DEFAULTS, 10, 343, 50, 16
+    DEFPUSHBUTTON   "OK", IDOK, 146, 343, 50, 16
+    PUSHBUTTON      "Cancel", IDCANCEL, 200, 343, 50, 16
 END

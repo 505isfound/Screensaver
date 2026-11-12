@@ -8,6 +8,7 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 | Setting | What it does | Default |
 |---|---|---|
 | Monitors | Automatic, one picture across all monitors, or each monitor separately | Automatic |
+| Picture position | Nebula centered on the main screen, or line up exactly with one of the wallpapers below | centered |
 | Twinkle amount / speed | How much and how fast stars twinkle | middle |
 | Bursts: how often / brightness | Now and then a random star builds up, pops with a glow and spikes, then settles | middle |
 | Glow amount | Strength of all nebula effects (far left = off) | middle |
@@ -45,9 +46,12 @@ image terms (CC BY 4.0 with visible credit). The credit is also shown in the scr
 
 ## Wallpapers
 
-Pictures that line up exactly with the screensaver, so the desktop and screensaver match:
+Pictures that line up exactly with the screensaver, so the desktop and screensaver match.
+Set the wallpaper with **Span** (right-click the desktop → Personalize → Background → pick the
+file → "Choose a fit": Span), then pick the same wallpaper under **Picture position** in the
+screensaver's Settings. It works with any monitor layout, the same way Windows' Span does.
 
-- [Triple 1080p monitors (5760 × 1080)](wallpapers/iris-nebula-triple-5760x1080.jpg): nebula on the middle screen.
-  In Windows: right-click the desktop → Personalize → Background → pick the file → "Span".
+- [Full picture (10711 × 7712)](wallpapers/iris-nebula-full-10711x7712.jpg)
+- [Triple 1080p (5760 × 1080)](wallpapers/iris-nebula-triple-5760x1080.jpg): made for three 1080p monitors side by side.
 
 Same picture credit as above.
