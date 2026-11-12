@@ -25,31 +25,40 @@ BEGIN
     LTEXT           "Picture position:", -1, 10, 32, 85, 10
     COMBOBOX        IDC_PLACEMENT, 100, 30, 150, 60, CBS_DROPDOWNLIST | WS_TABSTOP
     LTEXT           "Stars", -1, 10, 56, 120, 10
+    RTEXT           "100% = normal", -1, 170, 56, 80, 10
     LTEXT           "Twinkle amount", -1, 18, 72, 82, 10
-    CONTROL         "", 220, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 68, 150, 16
+    CONTROL         "", 220, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 68, 118, 16
+    RTEXT           "100%", 250, 218, 72, 32, 10
     LTEXT           "Twinkle speed", -1, 18, 90, 82, 10
-    CONTROL         "", 221, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 86, 150, 16
+    CONTROL         "", 221, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 86, 118, 16
+    RTEXT           "100%", 251, 218, 90, 32, 10
     LTEXT           "Bursts: how often", -1, 18, 108, 82, 10
-    CONTROL         "", 222, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 104, 150, 16
+    CONTROL         "", 222, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 104, 118, 16
+    RTEXT           "100%", 252, 218, 108, 32, 10
     LTEXT           "Bursts: brightness", -1, 18, 126, 82, 10
-    CONTROL         "", 223, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 122, 150, 16
+    CONTROL         "", 223, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 122, 118, 16
+    RTEXT           "100%", 253, 218, 126, 32, 10
     LTEXT           "Nebula", -1, 10, 142, 120, 10
     LTEXT           "Glow amount", -1, 18, 158, 82, 10
-    CONTROL         "", 224, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 154, 150, 16
+    CONTROL         "", 224, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 154, 118, 16
+    RTEXT           "100%", 254, 218, 158, 32, 10
     LTEXT           "Effect speed", -1, 18, 176, 82, 10
-    CONTROL         "", 225, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 172, 150, 16
+    CONTROL         "", 225, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 172, 118, 16
+    RTEXT           "100%", 255, 218, 176, 32, 10
     LTEXT           "Flash: how often", -1, 18, 194, 82, 10
-    CONTROL         "", 226, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 190, 150, 16
+    CONTROL         "", 226, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 190, 118, 16
+    RTEXT           "100%", 256, 218, 194, 32, 10
     LTEXT           "Flash: brightness", -1, 18, 212, 82, 10
-    CONTROL         "", 227, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 208, 150, 16
+    CONTROL         "", 227, "msctls_trackbar32", TBS_HORZ | TBS_BOTH | TBS_AUTOTICKS | WS_TABSTOP, 100, 208, 118, 16
+    RTEXT           "100%", 257, 218, 212, 32, 10
     LTEXT           "Nebula effects:", -1, 10, 232, 80, 10
-    AUTOCHECKBOX    "Drifting gas", 210, 38, 224, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Light flash and echo", 211, 158, 224, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Passing dust shadows", 212, 38, 237, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Color shimmer", 213, 158, 237, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Light rays", 214, 38, 250, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Newborn stars", 215, 158, 250, 115, 12, WS_TABSTOP
-    AUTOCHECKBOX    "Slowly zoom in and out", IDC_ZOOM, 18, 287, 200, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Drifting gas", 210, 18, 246, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Light flash and echo", 211, 138, 246, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Passing dust shadows", 212, 18, 259, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Color shimmer", 213, 138, 259, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Light rays", 214, 18, 272, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Newborn stars", 215, 138, 272, 115, 12, WS_TABSTOP
+    AUTOCHECKBOX    "Slowly zoom in and out", IDC_ZOOM, 18, 289, 200, 12, WS_TABSTOP
     LTEXT           "Picture: Iris Nebula (NGC 7023).\nCredit: NASA, ESA and Digitized Sky Survey 2.\nAcknowledgment: Davide De Martin (ESA/Hubble).", IDC_CREDIT, 10, 307, 240, 30
     PUSHBUTTON      "Defaults", IDC_DEFAULTS, 10, 343, 50, 16
     DEFPUSHBUTTON   "OK", IDOK, 146, 343, 50, 16

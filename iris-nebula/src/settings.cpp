@@ -4,6 +4,7 @@
 #include <commctrl.h>
 #include <algorithm>
 #include <cmath>
+#include <cwchar>
 
 static const wchar_t* kKey = L"Software\\Iris Nebula Screensaver";
 
@@ -73,6 +74,33 @@ Tuning GetTuning(const Settings& s)
 
 // ------------------------------------------------------------- settings window
 
+// Text shown next to a slider: how strong/fast/often compared with normal.
+static void ShowPercent(HWND dlg, int slider)
+{
+    int v = (int)SendDlgItemMessageW(dlg, IDC_SLIDER_FIRST + slider, TBM_GETPOS, 0, 0);
+    Settings s;
+    s.sliders[slider] = v;
+    Tuning t = GetTuning(s), normal = GetTuning(Settings());
+    float ratio = 1.0f;
+    switch (slider)
+    {
+    case SliderTwinkleAmount:   ratio = t.twinkle / normal.twinkle; break;
+    case SliderTwinkleSpeed:    ratio = t.twinkleSpeed / normal.twinkleSpeed; break;
+    case SliderBurstFrequency:  ratio = t.burstRate / normal.burstRate; break;
+    case SliderBurstBrightness: ratio = t.burstGain / normal.burstGain; break;
+    case SliderGlowAmount:      ratio = t.nebula / normal.nebula; break;
+    case SliderEffectSpeed:     ratio = t.effectSpeed / normal.effectSpeed; break;
+    case SliderFlashFrequency:  ratio = t.flashInterval > 0 ? normal.flashInterval / t.flashInterval : 0.0f; break;
+    case SliderFlashBrightness: ratio = t.flashGain / normal.flashGain; break;
+    }
+    wchar_t text[32];
+    if (ratio <= 0.0f)
+        wcscpy(text, slider == SliderFlashFrequency ? L"never" : L"off");
+    else
+        swprintf(text, 32, L"%d%%", (int)(ratio * 100.0f + 0.5f));
+    SetDlgItemTextW(dlg, IDC_PERCENT_FIRST + slider, text);
+}
+
 static void FillCombo(HWND dlg, int id, const wchar_t* const* items, int count, int selected)
 {
     HWND combo = GetDlgItem(dlg, id);
@@ -97,6 +125,7 @@ static void ShowSettings(HWND dlg, const Settings& s)
         SendMessageW(slider, TBM_SETPAGESIZE, 0, 10);
         SendMessageW(slider, TBM_SETTICFREQ, 50, 0);
         SendMessageW(slider, TBM_SETPOS, TRUE, s.sliders[i]);
+        ShowPercent(dlg, i);
     }
     for (int i = 0; i < 6; i++)
         CheckDlgButton(dlg, IDC_EFFECT_FIRST + i, (s.effects >> i) & 1 ? BST_CHECKED : BST_UNCHECKED);
@@ -120,13 +149,19 @@ static Settings ReadDialog(HWND dlg)
     return s;
 }
 
-static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM)
+static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg)
     {
     case WM_INITDIALOG:
         SetWindowTextW(dlg, L"Iris Nebula Settings  \u2013  version " IRIS_VERSION);
         ShowSettings(dlg, LoadSettings());
+        return TRUE;
+    case WM_HSCROLL:
+        // A slider moved: update its percent label.
+        for (int i = 0; i < SliderCount; i++)
+            if ((HWND)lp == GetDlgItem(dlg, IDC_SLIDER_FIRST + i))
+                ShowPercent(dlg, i);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wp))

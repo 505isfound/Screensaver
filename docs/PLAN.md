@@ -49,6 +49,9 @@
   short dip, then a pop with a glow and four spikes that fades within about half a second
   (about a quarter left after 0.4 s), followed by a soft wave of light. Replaces the old long tail.
 
+- 2026-11-12: Each slider shows a percentage compared with normal (100% = normal; speeds go
+  25%-400%, "never"/"off" at the far left where that applies).
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -59,3 +62,4 @@
 - 2026-11-12: v0.4.1: no ring on star bursts.
 - 2026-11-12: v0.5: Picture position / match wallpaper; full-picture wallpaper added.
 - 2026-11-12: v0.5.1: nebula flash like the star bursts.
+- 2026-11-12: v0.5.2: slider percentages; fixed overlapping effect checkboxes.

@@ -18,3 +18,5 @@
 // Sliders: IDC_SLIDER_FIRST + n is slider n (enum Slider in settings.h).
 #define IDC_SLIDER_FIRST  220
 #define IDC_DEFAULTS      240
+// Percent labels next to the sliders: IDC_PERCENT_FIRST + n.
+#define IDC_PERCENT_FIRST 250
