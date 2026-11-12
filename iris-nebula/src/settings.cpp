@@ -38,8 +38,11 @@ Settings LoadSettings()
     Settings s;
     s.layout = (LayoutMode)std::min<DWORD>(ReadNumber(L"Layout", (DWORD)Settings().layout), 2);
     s.placement = (int)std::min<DWORD>(ReadNumber(L"Placement", (DWORD)Settings().placement), (DWORD)kWallpaperCount);
-    for (int i = 0; i < SliderCount; i++)
-        s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
+    // Slider meanings changed in settings version 2 (the middle became Keegan's look),
+    // so older saved slider positions are not used.
+    if (ReadNumber(L"SettingsVersion", 1) >= 2)
+        for (int i = 0; i < SliderCount; i++)
+            s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
     s.effects = ReadNumber(L"NebulaEffects", 63) & 63;
     return s;
@@ -47,6 +50,7 @@ Settings LoadSettings()
 
 void SaveSettings(const Settings& s)
 {
+    WriteNumber(L"SettingsVersion", 2);
     WriteNumber(L"Layout", (DWORD)s.layout);
     WriteNumber(L"Placement", (DWORD)s.placement);
     for (int i = 0; i < SliderCount; i++)
@@ -60,12 +64,13 @@ Tuning GetTuning(const Settings& s)
     auto amount = [&](Slider k) { return s.sliders[k] / 50.0f; };                  // 0 .. 2
     auto speed = [&](Slider k) { return std::pow(2.0f, (s.sliders[k] - 50) / 25.0f); }; // 1/4 .. 4
     Tuning t;
-    t.twinkle = 0.45f * amount(SliderTwinkleAmount);
-    t.twinkleSpeed = speed(SliderTwinkleSpeed);
-    t.burstRate = amount(SliderBurstFrequency) * amount(SliderBurstFrequency);     // 0 .. 4
-    t.burstGain = amount(SliderBurstBrightness);
+    // The middle of each slider (100%) is the look Keegan picked on 2026-11-12.
+    t.twinkle = 0.90f * amount(SliderTwinkleAmount);
+    t.twinkleSpeed = 2.0f * speed(SliderTwinkleSpeed);
+    t.burstRate = 0.144f * amount(SliderBurstFrequency) * amount(SliderBurstFrequency);  // 0 .. 4x
+    t.burstGain = 2.0f * amount(SliderBurstBrightness);
     t.nebula = amount(SliderGlowAmount);
-    t.effectSpeed = speed(SliderEffectSpeed);
+    t.effectSpeed = 2.5f * speed(SliderEffectSpeed);
     t.flashInterval = s.sliders[SliderFlashFrequency] == 0 ? 0.0f
                     : 52.0f * std::pow(2.0f, (50 - s.sliders[SliderFlashFrequency]) / 25.0f);  // ~200 s .. 13 s
     t.flashGain = amount(SliderFlashBrightness);

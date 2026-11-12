@@ -17,7 +17,7 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 | Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, light rays, newborn stars | all on |
 | Slowly zoom in and out | Gentle zoom | off |
 
-Every slider shows a percentage: 100% is the slider's middle. The defaults are Keegan's picks. **Defaults** puts everything back.
+Every slider shows a percentage. 100% (the middle) is Keegan's chosen look, so each slider can go less or more from there. **Defaults** puts everything back.
 All timing is random (nothing repeats on a fixed cycle).
 
 **Automatic** shows one big picture when your monitors are all the same size and form a neat

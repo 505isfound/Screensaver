@@ -60,6 +60,10 @@
   250%, flash 100% / 100%. Percent labels still measure against the slider middle.
 - 2026-11-12: Nebula flash: no cross/spikes. Color shimmer only goes toward teal, never purple.
 
+- 2026-11-12: Keegan's look is now the middle (100%) of every slider, not just the default
+  position: GetTuning scales from his values. Settings version 2 ignores older saved slider
+  positions (their meaning changed).
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -73,3 +77,4 @@
 - 2026-11-12: v0.5.2: slider percentages; fixed overlapping effect checkboxes.
 - 2026-11-12: v0.5.3: match-wallpaper placement corrected to Windows' real Span behaviour.
 - 2026-11-12: v0.6: Keegan's defaults; no cross on nebula flash; no purple shimmer.
+- 2026-11-12: v0.6.1: slider middles = Keegan's look.
