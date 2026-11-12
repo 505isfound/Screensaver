@@ -35,6 +35,9 @@
   spikes, an expanding ring, and an afterglow. No twinkling during a burst. Rarer: about one every
   8-10 s per 1080p screen at the normal setting.
 
+- 2026-11-12: Version number shown in the Settings window title (src/version.h). Work now goes to
+  main, so each update appears on the Releases page as "Latest build".
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).

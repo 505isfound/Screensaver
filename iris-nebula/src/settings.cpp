@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "resource.h"
+#include "version.h"
 #include <commctrl.h>
 #include <algorithm>
 #include <cmath>
@@ -110,6 +111,7 @@ static INT_PTR CALLBACK SettingsProc(HWND dlg, UINT msg, WPARAM wp, LPARAM)
     switch (msg)
     {
     case WM_INITDIALOG:
+        SetWindowTextW(dlg, L"Iris Nebula Settings  \u2013  version " IRIS_VERSION);
         ShowSettings(dlg, LoadSettings());
         return TRUE;
     case WM_COMMAND:
