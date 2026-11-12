@@ -14,6 +14,7 @@ struct FrameSettings
     float burstRate = 1;  // star bursts: how often (1 = normal)
     float burstGain = 1;  // star bursts: brightness
     float flashGain = 1;  // nebula flash brightness
+    float swirlTime = 0;  // swirling center clock (scaled by swirl speed)
     float twinkle = 0;   // strength
     float nebula = 0;    // strength
     float fade = 1;      // 0..1

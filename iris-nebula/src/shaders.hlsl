@@ -30,6 +30,8 @@ cbuffer ViewConstants : register(b0)
     float  burstGain;     // how bright bursts are, 1 = normal
     float  flashGain;     // how bright the nebula flash is, 1 = normal
     float  realTime;      // plain clock in seconds (for random star events)
+    float  swirlTime;     // clock for the swirling center (runs faster/slower with "Swirl speed")
+    float3 padding2;
 };
 
 Texture2D<float4>       picture    : register(t0);
@@ -304,6 +306,7 @@ float4 CompositeVS(uint vertexId : SV_VertexID) : SV_Position
 #define EFFECT_LIGHTNING  64u   // split-second flashes deep inside the gas
 #define EFFECT_CELLS      128u  // brighter, busier storm areas that wander around
 #define EFFECT_CRACKLE    1024u // tiny bright threads flicker along the edges of the gas
+#define EFFECT_SWIRL      2048u // the gas around the center slowly turns like a whirlpool
 
 // Smooth random "noise" (values 0..1 that change gradually across space).
 float Hash2(float2 p)
@@ -450,6 +453,24 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             // Only the gas moves: stars stay sharp and still.
             float keep = max(Starness(color, gas), Starness(moved, gas));
             color = lerp(color, moved, wide * (1.0 - keep));
+        }
+
+        // Swirling center: the gas near the central star slowly turns around it,
+        // fastest close in. Like the drifting gas, two copies turn and take
+        // turns, so it can keep turning forever without winding into a smear.
+        if ((effects & EFFECT_SWIRL) && d < 2200.0)
+        {
+            const float period = 5.0;
+            float spin = 0.010 * exp(-Sq(d / 700.0));            // radians per second (at normal speed)
+            float2 v = img - focusImage;
+            float offset = GradNoise(img / 900.0 + 11.3) * 0.6;
+            float ph0 = frac(swirlTime / period + offset), ph1 = frac(swirlTime / period + offset + 0.5);
+            float a0 = spin * ph0 * period, a1 = spin * ph1 * period;
+            float2 p0 = focusImage + float2(v.x * cos(a0) - v.y * sin(a0), v.x * sin(a0) + v.y * cos(a0));
+            float2 p1 = focusImage + float2(v.x * cos(a1) - v.y * sin(a1), v.x * sin(a1) + v.y * cos(a1));
+            float3 turned = lerp(SamplePicture(p0), SamplePicture(p1), abs(ph0 - 0.5) * 2.0);
+            float keep = max(Starness(color, gas), Starness(turned, gas));
+            color = lerp(color, turned, wide * (1.0 - keep) * strength);
         }
 
         // 3. Passing dust shadows (in front of everything, so stars dim too).

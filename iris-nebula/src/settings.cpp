@@ -17,7 +17,7 @@ const int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[0]);
 // Registry names of the sliders, in the same order as enum Slider.
 static const wchar_t* kSliderNames[SliderCount] = {
     L"TwinkleAmount", L"TwinkleSpeed", L"BurstFrequency", L"BurstBrightness",
-    L"GlowAmount", L"EffectSpeed", L"FlashFrequency", L"FlashBrightness",
+    L"GlowAmount", L"EffectSpeed", L"FlashFrequency", L"FlashBrightness", L"SwirlSpeed",
 };
 
 static DWORD ReadNumber(const wchar_t* name, DWORD fallback)
@@ -46,14 +46,18 @@ Settings LoadSettings()
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
     s.effects = ReadNumber(L"NebulaEffects", kAllEffects) & kAllEffects;
     // The storm effects (bits 6-10) are new in settings version 3: switch them on.
-    if (ReadNumber(L"SettingsVersion", 1) < 3)
+    DWORD version = ReadNumber(L"SettingsVersion", 1);
+    if (version < 3)
         s.effects |= kAllEffects & ~63u;
+    // The swirling center (bit 11) is new in settings version 4: switch it on.
+    if (version < 4)
+        s.effects |= 1u << 11;
     return s;
 }
 
 void SaveSettings(const Settings& s)
 {
-    WriteNumber(L"SettingsVersion", 3);
+    WriteNumber(L"SettingsVersion", 4);
     WriteNumber(L"Layout", (DWORD)s.layout);
     WriteNumber(L"Placement", (DWORD)s.placement);
     for (int i = 0; i < SliderCount; i++)
@@ -77,6 +81,7 @@ Tuning GetTuning(const Settings& s)
     t.flashInterval = s.sliders[SliderFlashFrequency] == 0 ? 0.0f
                     : 52.0f * std::pow(2.0f, (50 - s.sliders[SliderFlashFrequency]) / 25.0f);  // ~200 s .. 13 s
     t.flashGain = amount(SliderFlashBrightness);
+    t.swirlSpeed = speed(SliderSwirlSpeed);
     return t;
 }
 
@@ -103,6 +108,7 @@ static void ShowPercent(HWND dlg, int slider)
     case SliderEffectSpeed:     ratio = t.effectSpeed / normal.effectSpeed; break;
     case SliderFlashFrequency:  ratio = t.flashInterval > 0 ? normal.flashInterval / t.flashInterval : 0.0f; break;
     case SliderFlashBrightness: ratio = t.flashGain / normal.flashGain; break;
+    case SliderSwirlSpeed:      ratio = t.swirlSpeed / normal.swirlSpeed; break;
     }
     wchar_t text[32];
     if (ratio <= 0.0f)

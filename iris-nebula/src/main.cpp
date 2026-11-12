@@ -258,7 +258,7 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     frame.burstRate = tuning.burstRate;
     frame.burstGain = tuning.burstGain;
     frame.flashGain = tuning.flashGain;
-    float lastT = 0, starClock = 0, nebulaClock = 0;
+    float lastT = 0, starClock = 0, nebulaClock = 0, swirlClock = 0;
     frame.effects = settings.effects;
 
     MSG msg = {};
@@ -313,9 +313,11 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
         lastT = t;
         starClock += dt * tuning.twinkleSpeed;
         nebulaClock += dt * tuning.effectSpeed;
+        swirlClock += dt * tuning.swirlSpeed;
         frame.time = starClock;
         frame.nebulaTime = nebulaClock;
         frame.realTime = t;
+        frame.swirlTime = swirlClock;
         frame.fade = 1;
         frame.zoom = 1 + (framing.maxZoom - 1) * (0.5f - 0.5f * std::cos(t * 6.2831853f / kZoomSeconds));
         if (!renderer.Draw(frame))

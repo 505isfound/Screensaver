@@ -16,11 +16,12 @@ enum Slider
     SliderEffectSpeed,
     SliderFlashFrequency,
     SliderFlashBrightness,
+    SliderSwirlSpeed,
     SliderCount
 };
 
 // Number of effect checkboxes (bits in Settings::effects).
-const int kEffectCount = 11;
+const int kEffectCount = 12;
 const DWORD kAllEffects = (1u << kEffectCount) - 1;
 
 struct Settings
@@ -29,7 +30,7 @@ struct Settings
     // which is his chosen look; see GetTuning.
     LayoutMode layout = LayoutMode::Span;
     int  placement = 1;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
-    int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50 };
+    int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50, 50 };
     bool slowZoom = false;
     DWORD effects = kAllEffects;  // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
 };
@@ -45,6 +46,7 @@ struct Tuning
     float effectSpeed;    // nebula effects speed, 1 = normal
     float flashInterval;  // average seconds between nebula flashes (0 = never)
     float flashGain;      // how bright a flash is, 1 = normal
+    float swirlSpeed;     // how fast the center swirls, 1 = normal
 };
 
 // Wallpapers the screensaver can line up with (iris-nebula/wallpapers/).

@@ -25,6 +25,8 @@ struct ViewConstants
     float burstGain;
     float flashGain;
     float realTime;
+    float swirlTime;
+    float padding2[3];
 };
 static_assert(sizeof(ViewConstants) % 16 == 0, "constant buffer size");
 
@@ -290,6 +292,7 @@ bool Renderer::Draw(const FrameSettings& frame)
                 c.burstGain = frame.burstGain;
                 c.flashGain = frame.flashGain;
                 c.realTime = frame.realTime;
+                c.swirlTime = frame.swirlTime;
                 memcpy(m.pData, &c, sizeof(c));
                 ctx_->Unmap(constants_, 0);
             }

@@ -13,8 +13,9 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 | Bursts: how often / brightness | Now and then a random star builds up, pops with a glow and spikes, then settles | middle |
 | Glow amount | Strength of all nebula effects (far left = off) | middle |
 | Effect speed | Speed of the gas drift, shadows, shimmer, rays and newborn stars | middle |
+| Swirl speed | How fast the gas around the center turns | middle |
 | Flash: how often / brightness | The nebula's flash and the light wave that follows (far left = never) | middle |
-| Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, newborn stars | all on |
+| Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, newborn stars, swirling center | all on |
 | Storm effects | Lightning, storm cells, crackle | all on |
 | Slowly zoom in and out | Gentle zoom | off |
 

@@ -80,6 +80,10 @@
 - 2026-11-12: Color shimmer at full shift: red -8%, green +6%, blue +3% (was -10% / +10% / -2%).
 - 2026-11-12: Removed light rays, churning gas and pulses along the strands.
 
+- 2026-11-12: Swirling center (checkbox, on) with its own "Swirl speed" slider (25%-400%). The gas
+  near the central star turns around it, fastest close in, using the same two-copies trick as the
+  drifting gas so it never winds into a smear. Settings version 4 switches it on.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -96,3 +100,4 @@
 - 2026-11-12: v0.6.1: slider middles = Keegan's look.
 - 2026-11-12: v0.7: storm effects; fixed dark dots on dimming stars.
 - 2026-11-12: v0.7.1: cleaner star list, gentler dimming, cloudy flash, less green shimmer, 3 effects removed.
+- 2026-11-12: v0.8: swirling center + swirl speed slider.
