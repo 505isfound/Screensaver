@@ -430,9 +430,8 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // 2. Nebula flash, built like the star bursts (seconds after it starts):
         //    0 - 1.2      build-up: the center brightens, flickering faster and faster
         //    1.2 - 1.32   a short dip, like a breath in
-        //    1.32         pop: bright flash with four spikes, gone again within a second
+        //    1.32         pop: bright flash, gone again within a second
         //    after that   a soft wave of light spreads outward through the gas
-        float3 popLight = 0.0;
         if (effects & EFFECT_ECHO)
         {
             const float popAt = 1.32;
@@ -454,15 +453,6 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
                 float p = t - popAt;
                 float pop = smoothstep(0.0, 0.04, p);
                 level = pop * (1.0 * exp(-p / 0.22) + 0.12 * exp(-p / 1.0));
-
-                // Four spikes and a glow from the central star, like a star burst.
-                float2 o = (img - focusImage) * scale;      // screen pixels from the center
-                float2 r = float2(o.x * 0.9994 - o.y * 0.035, o.x * 0.035 + o.y * 0.9994);
-                float len = (40.0 + 260.0 * saturate(p / 0.18)) * exp(-p / 0.5);
-                float spikes = exp(-r.y * r.y / 3.0) * exp(-abs(r.x) / len)
-                             + exp(-r.x * r.x / 3.0) * exp(-abs(r.y) / len);
-                float strength = pop * exp(-p / 0.25);
-                popLight = float3(0.80, 0.90, 1.0) * (spikes * 0.9 * strength) * flashGain * saturate(nebula);
             }
             glow += 0.9 * level * center * flashGain;
 
@@ -481,14 +471,14 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // Add less light where the picture is already nearly white,
         // so bright spots don't just turn into flat white.
         color += gas * mask * nebula * glow * saturate(1.25 - Luma(color));
-        color += popLight;
 
-        // 4. Color shimmer: the blue glow drifts toward teal and back.
+        // 4. Color shimmer: the blue glow drifts toward teal and back (never purple).
         if (effects & EFFECT_SHIMMER)
         {
             float wave = Clouds(img / 1400.0 + nebulaTime * 0.012) * 2.0 - 1.0;
             float s = (TimeNoise(nebulaTime / 18.0, 102u) * 2.0 - 1.0) * 0.8 + wave * 0.6;
-            color += gas * mask * nebula * s * float3(-0.10, 0.10, -0.02);
+            // Only toward teal: going the other way turns the gas purple.
+            color += gas * mask * nebula * saturate(s) * float3(-0.10, 0.10, -0.02);
         }
 
         // 5. Light rays from the central star, turning very slowly.

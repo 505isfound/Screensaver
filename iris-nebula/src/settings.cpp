@@ -36,8 +36,8 @@ static void WriteNumber(const wchar_t* name, DWORD value)
 Settings LoadSettings()
 {
     Settings s;
-    s.layout = (LayoutMode)std::min<DWORD>(ReadNumber(L"Layout", 0), 2);
-    s.placement = (int)std::min<DWORD>(ReadNumber(L"Placement", 0), (DWORD)kWallpaperCount);
+    s.layout = (LayoutMode)std::min<DWORD>(ReadNumber(L"Layout", (DWORD)Settings().layout), 2);
+    s.placement = (int)std::min<DWORD>(ReadNumber(L"Placement", (DWORD)Settings().placement), (DWORD)kWallpaperCount);
     for (int i = 0; i < SliderCount; i++)
         s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
     s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
@@ -80,7 +80,10 @@ static void ShowPercent(HWND dlg, int slider)
     int v = (int)SendDlgItemMessageW(dlg, IDC_SLIDER_FIRST + slider, TBM_GETPOS, 0, 0);
     Settings s;
     s.sliders[slider] = v;
-    Tuning t = GetTuning(s), normal = GetTuning(Settings());
+    Settings middle;                       // every slider in the middle = 100%
+    for (int& m : middle.sliders)
+        m = 50;
+    Tuning t = GetTuning(s), normal = GetTuning(middle);
     float ratio = 1.0f;
     switch (slider)
     {

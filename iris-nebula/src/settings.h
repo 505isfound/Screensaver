@@ -21,9 +21,11 @@ enum Slider
 
 struct Settings
 {
-    LayoutMode layout = LayoutMode::Auto;
-    int  placement = 0;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
-    int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50 };
+    // Defaults are Keegan's picks (2026-11-12). Slider value 50 is "100%" (normal).
+    LayoutMode layout = LayoutMode::Span;
+    int  placement = 1;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
+    //                    twinkle amt, twinkle spd, burst often, burst bright, glow, effect spd, flash often, flash bright
+    int  sliders[SliderCount] = { 100,       75,          19,          100,          50,   83,         50,          50 };
     bool slowZoom = false;
     DWORD effects = 63;   // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
 };

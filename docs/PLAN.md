@@ -55,6 +55,11 @@
 - 2026-11-12: Measured from Keegan's home desktop screenshot: Windows' Span cuts 1/3 of the extra
   height from the top and 2/3 from the bottom (not centered). Match mode now does the same.
 
+- 2026-11-12: Defaults set to Keegan's picks: one picture across all monitors, match wallpaper Full
+  picture, twinkle 200% / speed 200%, bursts 14% often / 200% bright, glow 100%, effect speed
+  250%, flash 100% / 100%. Percent labels still measure against the slider middle.
+- 2026-11-12: Nebula flash: no cross/spikes. Color shimmer only goes toward teal, never purple.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -67,3 +72,4 @@
 - 2026-11-12: v0.5.1: nebula flash like the star bursts.
 - 2026-11-12: v0.5.2: slider percentages; fixed overlapping effect checkboxes.
 - 2026-11-12: v0.5.3: match-wallpaper placement corrected to Windows' real Span behaviour.
+- 2026-11-12: v0.6: Keegan's defaults; no cross on nebula flash; no purple shimmer.
