@@ -45,6 +45,10 @@
   keep the shape, crop equally). Wallpapers listed in settings.cpp (kWallpapers) with the part of
   iris.jpg each shows. Keegan's home: 5120x1440 ultrawide + 2560x1440 centered above, Full picture.
 
+- 2026-11-12: Nebula flash rebuilt like the star bursts: 1.2 s build-up with speeding-up flicker,
+  short dip, then a pop with a glow and four spikes that fades within about half a second
+  (about a quarter left after 0.4 s), followed by a soft wave of light. Replaces the old long tail.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -54,3 +58,4 @@
 - 2026-11-12: v0.4: new star bursts.
 - 2026-11-12: v0.4.1: no ring on star bursts.
 - 2026-11-12: v0.5: Picture position / match wallpaper; full-picture wallpaper added.
+- 2026-11-12: v0.5.1: nebula flash like the star bursts.

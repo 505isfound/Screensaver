@@ -427,18 +427,51 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
 
         // 2. Light echo: the central star brightens, and the light travels
         //    outward through the gas over about 14 seconds.
+        // 2. Nebula flash, built like the star bursts (seconds after it starts):
+        //    0 - 1.2      build-up: the center brightens, flickering faster and faster
+        //    1.2 - 1.32   a short dip, like a breath in
+        //    1.32         pop: bright flash with four spikes, gone again within a second
+        //    after that   a soft wave of light spreads outward through the gas
+        float3 popLight = 0.0;
         if (effects & EFFECT_ECHO)
         {
-            float t = flashAge;                              // seconds since the flash
-            float travel = saturate(t / 14.0);               // ring moves outward for 14 s
-            float ring = exp(-Sq((d - travel * 2600.0) / 320.0)) * (1.0 - travel);
-            // The flash: a split-second peak that drops to about half within
-            // a fraction of a second, then fades back to normal over several seconds.
-            float rise = smoothstep(0.0, 0.06, t);
-            float flashLevel = rise * (0.5 * exp(-t / 0.12) + 0.5 * exp(-t / 5.0));
-            float flash = flashLevel * exp(-d * d / (2.0 * 260.0 * 260.0));
-            ring *= smoothstep(0.4, 2.0, t);                 // the wave starts after the flash
-            glow += (0.30 * ring + 0.9 * flash) * flashGain;
+            const float popAt = 1.32;
+            float t = flashAge;
+            float center = exp(-d * d / (2.0 * 260.0 * 260.0));
+            float level = 0.0;
+            if (t < 1.2)
+            {
+                float b = t * sqrt(t) / 1.31;                // 0..1, speeding up
+                float flicker = TimeNoise(realTime * lerp(3.0, 14.0, t / 1.2), 77u) * 2.0 - 1.0;
+                level = 0.30 * b + 0.08 * b * flicker;
+            }
+            else if (t < popAt)
+            {
+                level = -0.10;
+            }
+            else
+            {
+                float p = t - popAt;
+                float pop = smoothstep(0.0, 0.04, p);
+                level = pop * (1.0 * exp(-p / 0.22) + 0.12 * exp(-p / 1.0));
+
+                // Four spikes and a glow from the central star, like a star burst.
+                float2 o = (img - focusImage) * scale;      // screen pixels from the center
+                float2 r = float2(o.x * 0.9994 - o.y * 0.035, o.x * 0.035 + o.y * 0.9994);
+                float len = (40.0 + 260.0 * saturate(p / 0.18)) * exp(-p / 0.5);
+                float spikes = exp(-r.y * r.y / 3.0) * exp(-abs(r.x) / len)
+                             + exp(-r.x * r.x / 3.0) * exp(-abs(r.y) / len);
+                float strength = pop * exp(-p / 0.25);
+                popLight = float3(0.80, 0.90, 1.0) * (spikes * 0.9 * strength) * flashGain * saturate(nebula);
+            }
+            glow += 0.9 * level * center * flashGain;
+
+            // The wave of light, starting at the pop.
+            float since = max(t - popAt, 0.0);
+            float travel = saturate(since / 12.0);
+            float ring = exp(-Sq((d - travel * 2600.0) / 320.0)) * (1.0 - travel) * step(popAt, t);
+            ring *= smoothstep(0.2, 1.2, since);
+            glow += 0.22 * ring * flashGain;
         }
         else
         {
@@ -448,6 +481,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // Add less light where the picture is already nearly white,
         // so bright spots don't just turn into flat white.
         color += gas * mask * nebula * glow * saturate(1.25 - Luma(color));
+        color += popLight;
 
         // 4. Color shimmer: the blue glow drifts toward teal and back.
         if (effects & EFFECT_SHIMMER)
