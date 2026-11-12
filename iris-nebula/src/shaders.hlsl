@@ -56,6 +56,9 @@ float3 SampleBackground(float2 img)
     return background.SampleLevel(linearClamp, img / imageSize, 0).rgb;
 }
 
+// x squared (safe for negative x, unlike pow on some graphics cards).
+float Sq(float x) { return x * x; }
+
 float Luma(float3 c) { return dot(c, float3(0.3, 0.5, 0.2)); }
 
 // Small repeatable random numbers from a star's number.
@@ -111,14 +114,46 @@ float RandomEvent(uint seed, float slotLength, float chance, float riseTime, flo
 
 // ---------------------------------------------------------------- step 1: stars
 
+// Like RandomEvent, but returns how many seconds ago the event started
+// (or -1 if none is going on). Used for star bursts, which have several stages.
+float EventAge(uint seed, float slotLength, float chance, float duration)
+{
+    uint k = (uint)floor(realTime / slotLength);
+    float age = -1.0;
+    for (uint j = 0u; j < 2u; j++)
+    {
+        if (k < j)
+            break;
+        uint kk = k - j;
+        uint h = kk * 2654435761u ^ seed * 40503u;
+        if (Hash(h) < chance)
+        {
+            float a = realTime - (kk + Hash(h + 977u)) * slotLength;
+            if (a >= 0.0 && a < duration)
+                age = a;
+        }
+    }
+    return age;
+}
+
+// Star burst timeline (seconds after it starts):
+//   0.0 - 1.0   build-up: the star brightens and flickers faster and faster
+//   1.0 - 1.12  a short dip, like a breath in
+//   1.12        pop: big glow, four spikes shooting out, a ring of light
+//   to 2.4      afterglow fades back to the normal star
+static const float kBurstLength = 2.4;
+static const float kPopAt = 1.12;
+
 struct StarVertex
 {
     float4 pos       : SV_Position;
     float2 center    : CENTER;     // star center on screen
     float  coreSize  : CORE;       // twinkle area radius on screen
     float  quadSize  : QUAD;       // drawn square half-size on screen
-    float  amount    : AMOUNT;     // twinkle: -1..+1 times strength
-    float  glint     : GLINT;      // spike flash: 0..1
+    float  amount    : AMOUNT;     // brighten/dim the star itself: -1..+1 or more
+    float  glint     : GLINT;      // spike flash of big stars: 0..1
+    float4 burst     : BURST;      // pop glow, spike length (px), ring radius (px), ring strength
+    float4 tint      : TINT;       // color of the burst light; w = how big it is
 };
 
 StarVertex StarVS(uint id : SV_VertexID)
@@ -148,22 +183,54 @@ StarVertex StarVS(uint id : SV_VertexID)
     if (canGlint && twinkle > 0.0)
         glint = RandomEvent(starId * 5u + 1u, 30.0, 0.5, 0.35, 0.7);
 
-    // A small share of stars give a quick bright burst: a fraction of a second
-    // up, then straight back to normal. On a 1080p screen about one every
-    // two seconds, each at a random star and a random moment.
-    float burst = 0.0;
-    if (burstRate > 0.0 && brightness > 0.6)
-        burst = RandomEvent(starId * 5u + 2u, 8.0, min(0.0012 * burstRate, 1.0), 0.06, 0.10) * burstGain;
-    glint = max(glint, burst);
-    amount += burst * 2.2;
+    // Star bursts: rare, at random stars and random moments.
+    // About one every 8-10 seconds on a 1080p screen at the normal setting.
+    float4 burst = 0.0;
+    float size = 0.0;
+    float age = -1.0;
+    if (burstRate > 0.0 && burstGain > 0.0 && brightness > 0.7)
+        age = EventAge(starId * 5u + 2u, 8.0, min(0.0005 * burstRate, 1.0), kBurstLength);
+    if (age >= 0.0)
+    {
+        size = 0.8 + 0.4 * sqrt(burstGain);
+        amount = 0.0;   // no twinkling during a burst, so the build-up is clear
+        if (age < 1.0)
+        {
+            // Build-up: brighter, with a flicker that speeds up.
+            float b = age * sqrt(age);                  // starts gently, speeds up
+            float flicker = TimeNoise(realTime * lerp(3.0, 16.0, age), starId + 5u) * 2.0 - 1.0;
+            amount = (1.3 * b + 0.35 * b * flicker) * burstGain;
+            burst.x = 0.45 * b * burstGain;             // a glow growing around it
+        }
+        else if (age < kPopAt)
+        {
+            amount = -0.4 * burstGain;                  // the breath in
+        }
+        else
+        {
+            float p = age - kPopAt;                     // seconds since the pop
+            float pop = smoothstep(0.0, 0.04, p);
+            amount = (2.5 * exp(-p / 0.35)) * pop * burstGain;
+            burst.x = 1.6 * exp(-p / 0.22) * pop * burstGain;            // glow
+            burst.y = (14.0 + 70.0 * saturate(p / 0.15)) * exp(-p / 0.45) * size; // spikes shoot out, then shrink
+            burst.z = 4.0 + 60.0 * size * sqrt(saturate(p / 0.9));         // ring grows
+            burst.w = 0.9 * exp(-p / 0.35) * pop * burstGain;              // and fades
+        }
+    }
 
     float core = max((radius * 2.5 + 2.0) * scale, 1.5);
     float quad = canGlint ? max(radius * 10.0 * scale, core) : core;
+    if (age >= 0.0)
+        quad = max(quad, 90.0 * size);
 
     float2 center = focusScreen + (starPos - focusImage) * scale;
     float2 corner = float2((vertexId == 1 || vertexId == 2 || vertexId == 4) ? 1.0 : -1.0,
                            (vertexId == 2 || vertexId == 4 || vertexId == 5) ? 1.0 : -1.0);
     float2 screen = center + corner * (quad + 1.0);
+
+    // Burst light takes the star's own color, mixed with white.
+    float3 c = SamplePicture(starPos);
+    float3 tint = lerp(c / max(max(c.r, max(c.g, c.b)), 0.05), 1.0, 0.55);
 
     StarVertex o;
     o.pos = float4(screen / rtSize * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
@@ -172,13 +239,16 @@ StarVertex StarVS(uint id : SV_VertexID)
     o.quadSize = quad;
     o.amount = amount;
     o.glint = glint;
+    o.burst = burst;
+    o.tint = float4(tint, size);
     return o;
 }
 
 float4 StarPS(StarVertex v) : SV_Target
 {
     float2 screen = v.pos.xy;
-    float dist = length(screen - v.center);
+    float2 offset = screen - v.center;
+    float dist = length(offset);
     float2 img = ScreenToImage(screen);
 
     float3 bg = SampleBackground(img);
@@ -192,7 +262,24 @@ float4 StarPS(StarVertex v) : SV_Target
     float spikeFade = saturate(1.0 - dist / v.quadSize);
 
     float gain = v.amount * coreFade + v.glint * 1.4 * spikeFade;
-    return float4(starOnly * gain * calm, 0.0);
+    float3 light = starOnly * gain * calm;
+
+    // Extra light drawn for a burst (glow, four spikes, ring).
+    if (v.tint.w > 0.0)
+    {
+        float s = v.tint.w;
+        float glow = exp(-dist * dist / (2.0 * 25.0 * s * s)) + 0.35 * exp(-dist * dist / (2.0 * 300.0 * s * s));
+        // Spikes line up with the picture's own star spikes (nearly straight up/down and sideways).
+        float2 d = float2(offset.x * 0.9994 - offset.y * 0.035, offset.x * 0.035 + offset.y * 0.9994);
+        float spikeLen = max(v.burst.y, 1.0);
+        float spikes = exp(-d.y * d.y / 1.2) * exp(-abs(d.x) / spikeLen)
+                     + exp(-d.x * d.x / 1.2) * exp(-abs(d.y) / spikeLen);
+        float ring = exp(-Sq((dist - v.burst.z) / (1.6 * s))) * v.burst.w;
+        float edge = saturate(1.0 - dist / v.quadSize);   // fade out before the square's edge
+        light += v.tint.rgb * (v.burst.x * glow + 0.8 * v.burst.x * spikes + 0.45 * ring) * edge
+                 * (0.4 + 0.6 * calm);
+    }
+    return float4(light, 0.0);
 }
 
 // ------------------------------------------------------------ step 2: picture
@@ -347,7 +434,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         {
             float t = flashAge;                              // seconds since the flash
             float travel = saturate(t / 14.0);               // ring moves outward for 14 s
-            float ring = exp(-pow((d - travel * 2600.0) / 320.0, 2.0)) * (1.0 - travel);
+            float ring = exp(-Sq((d - travel * 2600.0) / 320.0)) * (1.0 - travel);
             // The flash: a split-second peak that drops to about half within
             // a fraction of a second, then fades back to normal over several seconds.
             float rise = smoothstep(0.0, 0.06, t);
@@ -359,7 +446,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         else
         {
             float travel = saturate(flashAge / 20.0);       // just a faint wave, no flash
-            glow += 0.10 * exp(-pow((d - travel * 2400.0) / 260.0, 2.0)) * (1.0 - travel);
+            glow += 0.10 * exp(-Sq((d - travel * 2400.0) / 260.0)) * (1.0 - travel);
         }
         // Add less light where the picture is already nearly white,
         // so bright spots don't just turn into flat white.

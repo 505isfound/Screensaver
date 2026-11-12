@@ -309,6 +309,7 @@ bool Renderer::Draw(const FrameSettings& frame)
         {
             ID3D11ShaderResourceView* in[2] = { picture_, background_ };
             ctx_->PSSetShaderResources(0, 2, in);
+            ctx_->VSSetShaderResources(0, 1, &picture_);   // burst color
             ctx_->VSSetShaderResources(3, 1, &starList_);
             ctx_->VSSetShader(starVS_, nullptr, 0);
             ctx_->PSSetShader(starPS_, nullptr, 0);

@@ -30,9 +30,15 @@
 - 2026-11-11: Nebula effects use grid-free "gradient noise" (turned per layer, slightly bent).
   The earlier grid-based noise showed up as soft squares in the dust shadows on a big wall.
 
+- 2026-11-12: Star bursts redesigned as a ~2.4 s event: 1 s build-up (brighter, flicker speeding
+  up), short dip, then a pop with a big glow, four spikes lined up with the picture's own star
+  spikes, an expanding ring, and an afterglow. No twinkling during a burst. Rarer: about one every
+  8-10 s per 1080p screen at the normal setting.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
 - 2026-11-11: Iris Nebula v0.2: instant start with the full picture (cache), no fade-in.
 - 2026-11-11: Iris Nebula v0.3: six nebula effects, random timing, star bursts, sliders.
 - 2026-11-11: v0.3.1: fixed square-looking dust shadows.
+- 2026-11-12: v0.4: new star bursts.
