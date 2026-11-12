@@ -17,6 +17,15 @@ with any monitor setup.
 The first time, Windows may say **"Windows protected your PC"**, because the file isn't signed by a
 company. Click **More info** → **Run anyway**.
 
+### Start it any time (shortcut + hotkey)
+
+1. Hold **Shift**, right-click `IrisNebula.scr` → **Copy as path**.
+2. Right-click the desktop → **New** → **Shortcut**. Paste the path, then type a space and `/s`
+   at the end, for example `"C:\Users\you\Documents\Screensavers\IrisNebula.scr" /s`.
+   Click **Next**, name it, click **Finish**.
+3. Right-click the new shortcut → **Properties** → click in **Shortcut key** → press the keys you
+   want (for example Ctrl + Alt + N) → **OK**.
+
 To remove it, pick another screensaver in Screen Saver Settings and delete the file.
 
 ## For developers

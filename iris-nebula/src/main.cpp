@@ -46,6 +46,15 @@ struct Loaded
 static POINT g_startCursor;
 static bool g_haveStartCursor = false;
 static bool g_closeOnInput = false;
+static DWORD g_startTick = 0;
+
+// Started from a shortcut or hotkey, the keys are still being let go (and the
+// mouse may still be moving) for a moment. So input in the first 1.5 seconds
+// doesn't close the screensaver.
+static bool InGracePeriod()
+{
+    return GetTickCount() - g_startTick < 1500;
+}
 
 static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -63,7 +72,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         {
             POINT p;
             GetCursorPos(&p);
-            if (!g_haveStartCursor)
+            if (!g_haveStartCursor || InGracePeriod())
             {
                 g_startCursor = p;
                 g_haveStartCursor = true;
@@ -79,7 +88,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_MBUTTONDOWN:
     case WM_XBUTTONDOWN:
     case WM_MOUSEWHEEL:
-        if (g_closeOnInput)
+        if (g_closeOnInput && !InGracePeriod())
             PostMessageW(hwnd, WM_CLOSE, 0, 0);
         break;
     case WM_ACTIVATEAPP:
@@ -191,7 +200,7 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     // Any mouse or keyboard use while still loading means "stop".
     LASTINPUTINFO lastInput = { sizeof(lastInput) };
     GetLastInputInfo(&lastInput);
-    const DWORD inputAtStart = lastInput.dwTime;
+    DWORD inputAtStart = lastInput.dwTime;
 
     Renderer renderer;
     if (!renderer.Init(hwnd, width, height))
@@ -291,7 +300,9 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
             }
             if (loaded.state == 0)
             {
-                if (g_closeOnInput && GetLastInputInfo(&lastInput) && lastInput.dwTime != inputAtStart)
+                if (InGracePeriod() && GetLastInputInfo(&lastInput))
+                    inputAtStart = lastInput.dwTime;   // still letting go of the hotkey
+                else if (g_closeOnInput && GetLastInputInfo(&lastInput) && lastInput.dwTime != inputAtStart)
                     break;
                 Sleep(5);
                 continue;
@@ -331,6 +342,7 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR cmd, int)
 {
+    g_startTick = GetTickCount();
     UseRealPixels();
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 

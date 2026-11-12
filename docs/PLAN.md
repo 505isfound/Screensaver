@@ -88,6 +88,9 @@
   74% of before, glow 200%, effect speed 184%, flash brightness 200%, swirl speed 400%. Crackle
   off and slow zoom on by default. Settings version 5 ignores older saved slider positions.
 
+- 2026-11-12: Input in the first 1.5 s is ignored, so the screensaver can be started from a desktop
+  shortcut with a hotkey (`IrisNebula.scr /s`) without letting go of the keys closing it.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -106,3 +109,4 @@
 - 2026-11-12: v0.7.1: cleaner star list, gentler dimming, cloudy flash, less green shimmer, 3 effects removed.
 - 2026-11-12: v0.8: swirling center + swirl speed slider.
 - 2026-11-12: v0.8.1: Keegan's second set of defaults.
+- 2026-11-12: v0.8.2: start from a shortcut/hotkey.
