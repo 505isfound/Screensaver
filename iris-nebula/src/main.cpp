@@ -269,6 +269,10 @@ static int RunScreensaver(HINSTANCE instance, Mode mode, HWND previewParent)
     frame.flashGain = tuning.flashGain;
     float lastT = 0, starClock = 0, nebulaClock = 0, swirlClock = 0;
     frame.effects = settings.effects;
+    // For demo videos of experimental effects: IRIS_DEMO_EFFECTS=<bits> adds them.
+    wchar_t demoText[32];
+    if (GetEnvironmentVariableW(L"IRIS_DEMO_EFFECTS", demoText, 32) > 0)
+        frame.effects |= (unsigned)_wtoi(demoText);
 
     MSG msg = {};
     bool running = true;

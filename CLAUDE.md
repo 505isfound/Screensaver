@@ -27,3 +27,6 @@ Preview videos: set `IRIS_TIME_SCALE=0.25` so the emulator runs 4× slower, reco
 `ffmpeg -f x11grab`, then speed the recording up 4× (`setpts=PTS/4`). Nebula effects can be
 switched on for testing with the registry value `NebulaEffects` (bits, see `EFFECT_...` in
 `src/shaders.hlsl`).
+
+Experimental effects without a checkbox can be shown with `IRIS_DEMO_EFFECTS=<bits>` (added on top
+of the saved settings).

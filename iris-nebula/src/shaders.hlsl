@@ -307,6 +307,11 @@ float4 CompositeVS(uint vertexId : SV_VertexID) : SV_Position
 #define EFFECT_CELLS      128u  // brighter, busier storm areas that wander around
 #define EFFECT_CRACKLE    1024u // tiny bright threads flicker along the edges of the gas
 #define EFFECT_SWIRL      2048u // the gas around the center slowly turns like a whirlpool
+// Experiments (no checkbox yet; switched on with IRIS_DEMO_EFFECTS for demo videos).
+#define EFFECT_RELIGHT    4096u  // the light inside slowly changes direction, shading the gas in 3D
+#define EFFECT_MOTES      8192u  // tiny dust specks drift in front, at two depths
+#define EFFECT_STREAMS    16384u // thin threads of light spiral in toward the central star
+#define EFFECT_SWAY       32768u // the bright gas sways a little against the stars (depth)
 
 // Smooth random "noise" (values 0..1 that change gradually across space).
 float Hash2(float2 p)
@@ -473,6 +478,17 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             color = lerp(color, turned, wide * (1.0 - keep) * strength);
         }
 
+        // Experiment: depth sway. The bright gas shifts a few pixels back and
+        // forth against the stars and the dark dust, as if seen in 3D.
+        if (effects & EFFECT_SWAY)
+        {
+            float2 sway = (float2(TimeNoise(nebulaTime / 9.0, 601u), TimeNoise(nebulaTime / 11.0, 602u)) - 0.5) * 22.0;
+            float layer = mask * strength;                    // brightest gas moves most
+            float3 moved = SamplePicture(img - sway * layer);
+            float keep = max(Starness(color, gas), Starness(moved, gas));
+            color = lerp(color, moved, saturate(layer) * (1.0 - keep));
+        }
+
         // 3. Passing dust shadows (in front of everything, so stars dim too).
         if (effects & EFFECT_SHADOWS)
         {
@@ -616,6 +632,56 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             // Only a few tiny patches crackle at any moment.
             float patch_ = smoothstep(0.80, 0.92, GradNoise(img / 140.0 + step_ * 5.3));
             color += float3(0.75, 0.88, 1.0) * spark * patch_ * edge * wide * (0.3 + storm) * 0.9 * strength;
+        }
+
+        // Experiment: moving inner light. The gas is treated like a landscape
+        // (bright = high) and lit from a direction that slowly wanders around.
+        if (effects & EFFECT_RELIGHT)
+        {
+            float e = 70.0;
+            float gx = Luma(SampleBackground(img + float2(e, 0))) - Luma(SampleBackground(img - float2(e, 0)));
+            float gy = Luma(SampleBackground(img + float2(0, e))) - Luma(SampleBackground(img - float2(0, e)));
+            float3 n = normalize(float3(-gx * 9.0, -gy * 9.0, 1.0));
+            float a = TimeNoise(nebulaTime / 25.0, 611u) * TAU * 2.0;
+            float3 l = normalize(float3(cos(a), sin(a), 0.7));
+            float shade = dot(n, l) - l.z;                   // >0 facing the light, <0 turned away
+            color *= 1.0 + clamp(shade * 1.6, -0.18, 0.35) * wide * strength;
+        }
+
+        // Experiment: falling streams. Thin threads of light on inward spirals,
+        // broken up so they look like wisps rather than a pattern.
+        if (effects & EFFECT_STREAMS)
+        {
+            float2 v = img - focusImage;
+            float angle = Angle(v) / TAU;                                  // -0.5 .. 0.5
+            float r = max(d, 1.0);
+            float x = angle * 3.0 + log(r) * 1.8 + nebulaTime * 0.04;      // 3 arms, moving inward
+            float wave = 1.0 - abs(frac(x) * 2.0 - 1.0);
+            float thread = pow(wave, 40.0);
+            float pieces = smoothstep(0.55, 0.80, GradNoise(img / 420.0 + nebulaTime * 0.01));
+            float band = smoothstep(150.0, 400.0, d) * (1.0 - smoothstep(1200.0, 1900.0, d));
+            color += float3(0.70, 0.85, 1.0) * thread * pieces * band * gas * 1.2 * wide * strength;
+        }
+
+        // Experiment: floating dust. Tiny specks drifting at two depths.
+        if (effects & EFFECT_MOTES)
+        {
+            [unroll] for (int layer = 0; layer < 2; layer++)
+            {
+                float size = layer == 0 ? 45.0 : 80.0;                       // picture pixels per cell
+                float2 drift = (layer == 0 ? float2(3.0, 1.2) : float2(6.5, 2.4)) * nebulaTime;
+                float2 p = (img + drift) / size;
+                float2 cellId = floor(p);
+                uint h = (uint)(cellId.x + 4096.0) * 73856093u ^ (uint)(cellId.y + 4096.0) * 19349663u ^ (uint)layer * 83492791u;
+                if (Hash(h) < 0.14)
+                {
+                    float2 at = cellId + float2(Hash(h + 1u), Hash(h + 2u));
+                    float dist = length(p - at) * size * scale;            // screen pixels
+                    float dot_ = exp(-dist * dist / (layer == 0 ? 1.2 : 2.6));
+                    float twinkle_ = 0.5 + 0.5 * TimeNoise(realTime * 0.7, h);
+                    color += float3(0.85, 0.80, 0.75) * dot_ * twinkle_ * (layer == 0 ? 0.35 : 0.55) * strength * saturate(wide * 3.0 + 0.3);
+                }
+            }
         }
 
         // 6. Newborn stars: small warm glows that slowly swell and fade.

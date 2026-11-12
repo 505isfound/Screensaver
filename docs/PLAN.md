@@ -91,6 +91,10 @@
 - 2026-11-12: Input in the first 1.5 s is ignored, so the screensaver can be started from a desktop
   shortcut with a hotkey (`IrisNebula.scr /s`) without letting go of the keys closing it.
 
+- 2026-11-12: Four experiments written for demo videos, not switched on in the screensaver
+  (no checkbox; IRIS_DEMO_EFFECTS=<bits> turns them on for testing): moving inner light (4096),
+  floating dust (8192), falling streams (16384), depth sway (32768). Waiting for Keegan's picks.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
