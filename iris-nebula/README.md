@@ -49,7 +49,7 @@ image terms (CC BY 4.0 with visible credit). The credit is also shown in the scr
 Pictures that line up exactly with the screensaver, so the desktop and screensaver match.
 Set the wallpaper with **Span** (right-click the desktop → Personalize → Background → pick the
 file → "Choose a fit": Span), then pick the same wallpaper under **Picture position** in the
-screensaver's Settings. It works with any monitor layout, the same way Windows' Span does.
+screensaver's Settings. It places the picture the way Windows' Span does (measured on a real desktop).
 
 - [Full picture (10711 × 7712)](wallpapers/iris-nebula-full-10711x7712.jpg)
 - [Triple 1080p (5760 × 1080)](wallpapers/iris-nebula-triple-5760x1080.jpg): made for three 1080p monitors side by side.

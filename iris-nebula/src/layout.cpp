@@ -94,16 +94,21 @@ Layout BuildLayout(const std::vector<Monitor>& monitors, LayoutMode mode, const 
     bool span = mode == LayoutMode::Span || (mode == LayoutMode::Auto && IsNeatGrid(monitors));
     if (f.wallWidth > 0 && f.wallHeight > 0)
     {
-        // Same math as Windows' "Span": fill the box around all monitors,
-        // keeping the shape, centered.
+        // Same as Windows' "Span": the picture fills the box around all
+        // monitors, keeping its shape. Whatever doesn't fit is cut off.
+        // Measured on Keegan's desktop (5120x1440 + 2560x1440 above): Windows
+        // cuts 1/3 of the extra height from the top and 2/3 from the bottom,
+        // not half and half. Sideways it is assumed to be half and half.
+        const float kCutFromLeft = 0.5f, kCutFromTop = 1.0f / 3.0f;
         RECT box = Bounds(monitors);
         float boxW = (float)(box.right - box.left), boxH = (float)(box.bottom - box.top);
         View v;
         v.rect = box;
         v.scale = std::max(boxW / f.wallWidth, boxH / f.wallHeight);
-        float centerX = box.left + boxW * 0.5f, centerY = box.top + boxH * 0.5f;
-        v.focusX = centerX + (f.focusX - (f.wallLeft + f.wallWidth * 0.5f)) * v.scale;
-        v.focusY = centerY + (f.focusY - (f.wallTop + f.wallHeight * 0.5f)) * v.scale;
+        float left = box.left + (boxW - f.wallWidth * v.scale) * kCutFromLeft;
+        float top = box.top + (boxH - f.wallHeight * v.scale) * kCutFromTop;
+        v.focusX = left + (f.focusX - f.wallLeft) * v.scale;
+        v.focusY = top + (f.focusY - f.wallTop) * v.scale;
         layout.views.push_back(v);
     }
     else if (span)
