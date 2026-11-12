@@ -71,6 +71,15 @@
 - 2026-11-12: Fixed dark dots on dimming stars: dimming now covers the whole star (including the
   spikes on spiky stars) evenly, and never removes more than 70% of the star's light.
 
+- 2026-11-12: Star list cleanup (prepare_image.py): dropped stretched smudges and detections that
+  sit in a brighter star's glow or spikes (they made dimming spots with no star in the middle).
+  143k -> 124k stars.
+- 2026-11-12: Dimming capped at 40% of a star's own light (was 70%, looked like "black" stars).
+- 2026-11-12: Nebula flash lights the cloud from inside: brighter on thick strands and random hot
+  spots, darker where made-up clouds sit in front; a new pattern every flash.
+- 2026-11-12: Color shimmer at full shift: red -8%, green +6%, blue +3% (was -10% / +10% / -2%).
+- 2026-11-12: Removed light rays, churning gas and pulses along the strands.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -86,3 +95,4 @@
 - 2026-11-12: v0.6: Keegan's defaults; no cross on nebula flash; no purple shimmer.
 - 2026-11-12: v0.6.1: slider middles = Keegan's look.
 - 2026-11-12: v0.7: storm effects; fixed dark dots on dimming stars.
+- 2026-11-12: v0.7.1: cleaner star list, gentler dimming, cloudy flash, less green shimmer, 3 effects removed.

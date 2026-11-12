@@ -14,8 +14,8 @@ The picture stays still; the stars twinkle and the nebula glows softly.
 | Glow amount | Strength of all nebula effects (far left = off) | middle |
 | Effect speed | Speed of the gas drift, shadows, shimmer, rays and newborn stars | middle |
 | Flash: how often / brightness | The nebula's flash and the light wave that follows (far left = never) | middle |
-| Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, light rays, newborn stars | all on |
-| Storm effects | Lightning, storm cells, churning gas, pulses along the strands, crackle | all on |
+| Nebula effects | Drifting gas, light flash and echo, dust shadows, color shimmer, newborn stars | all on |
+| Storm effects | Lightning, storm cells, crackle | all on |
 | Slowly zoom in and out | Gentle zoom | off |
 
 Every slider shows a percentage. 100% (the middle) is Keegan's chosen look, so each slider can go less or more from there. **Defaults** puts everything back.
@@ -28,7 +28,7 @@ centered on the main display (the one Windows marks as "main" in Display setting
 ## How it works
 
 - `tools/prepare_image.py` turns the original picture into the files in `assets/`:
-  the picture rotated 90° clockwise, a star-free copy, and a list of ~140,000 stars.
+  the picture rotated 90° clockwise, a star-free copy, and a list of ~124,000 stars.
 - Those files are packed inside `IrisNebula.scr`, so it is a single file.
 - The first start unpacks the big picture (a few seconds) and saves a ready-to-use copy sized for
   your monitors in `%LOCALAPPDATA%\Iris Nebula Screensaver`. Later starts load that copy, so the

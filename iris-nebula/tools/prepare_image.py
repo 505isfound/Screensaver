@@ -61,10 +61,12 @@ def main(src):
     ys, xs, vals = ys[order], xs[order], vals[order]
     print("stars kept", len(xs), "faintest", vals[-1])
 
-    recs = []
+    kept = []   # brightest first (the list is sorted that way)
+    cell = 64
+    grid = {}
     for x, y, v in zip(xs, ys, vals):
-        # radius: how far the star stays above half its peak (scan 4 directions)
-        r = 0
+        # radius: how far the star stays above half its peak, in 4 directions
+        reach = []
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             k = 1
             while k < 60:
@@ -72,10 +74,30 @@ def main(src):
                 if not (0 <= px < w and 0 <= py < h) or star[py, px] < 0.5 * v:
                     break
                 k += 1
-            r = max(r, k)
+            reach.append(k)
+        r = max(reach)
         if r > 25:
             continue  # big soft blob, probably gas, not a star
-        recs.append(struct.pack("<4f", float(x), float(y), float(r), min(v / 255.0, 1.0)))
+        if r >= 4 and max(reach) > 2.5 * min(reach):
+            continue  # stretched shape (smudge or streak), not a round star
+        # Skip anything sitting in the glow or spikes of a brighter star:
+        # those are parts of that star, not stars of their own.
+        part_of_brighter = False
+        gx, gy = x // cell, y // cell
+        for cx in range(gx - 4, gx + 5):
+            for cy in range(gy - 4, gy + 5):
+                for (bx, by, br) in grid.get((cx, cy), ()):
+                    ddx, ddy = abs(int(x) - bx), abs(int(y) - by)
+                    if br >= 6 and ddx * ddx + ddy * ddy < (br * 3 + 4) ** 2:
+                        part_of_brighter = True
+                    elif br >= 6 and (ddx <= 3 or ddy <= 3) and max(ddx, ddy) < br * 11:
+                        part_of_brighter = True  # on a spike
+        if part_of_brighter:
+            continue
+        grid.setdefault((gx, gy), []).append((int(x), int(y), r))
+        kept.append((x, y, r, v))
+    recs = [struct.pack("<4f", float(x), float(y), float(r), min(v / 255.0, 1.0)) for x, y, r, v in kept]
+    print("stars after cleanup", len(recs))
     with open(out / "stars.bin", "wb") as f:
         f.write(b"STAR" + struct.pack("<I", len(recs)) + b"".join(recs))
     print("done")

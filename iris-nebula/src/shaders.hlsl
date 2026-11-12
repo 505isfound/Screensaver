@@ -253,7 +253,8 @@ float4 StarPS(StarVertex v) : SV_Target
 
     float3 bg = SampleBackground(img);
     // Only the star's own light, not the gas behind it.
-    float3 starOnly = max(SamplePicture(img) - bg * 1.05, 0.0);
+    // (A small extra margin keeps faint gas detail out of it.)
+    float3 starOnly = max(SamplePicture(img) - bg * 1.05 - 0.03, 0.0);
     // Stars inside the bright nebula twinkle less, so the gas never flickers.
     float calm = 1.0 - smoothstep(0.30, 0.60, Luma(bg));
 
@@ -262,9 +263,9 @@ float4 StarPS(StarVertex v) : SV_Target
     // only at the very edge (for stars with spikes, that includes the spikes).
     float starArea = 1.0 - smoothstep(0.55, 1.0, dist / v.coreSize);
 
-    // Never take away more than 70% of the star's own light, so a dimming star
-    // never turns into a dark hole.
-    float gain = max(v.amount, -0.7) * starArea + v.glint * 1.4 * spikeFade;
+    // Dimming is gentle: never more than 40% of the star's own light, so a
+    // dimming star never stands out darker than its surroundings.
+    float gain = max(v.amount, -0.4) * starArea + v.glint * 1.4 * spikeFade;
     float3 light = starOnly * gain * calm;
 
     // Extra light drawn for a burst (glow and four spikes).
@@ -298,13 +299,10 @@ float4 CompositeVS(uint vertexId : SV_VertexID) : SV_Position
 #define EFFECT_ECHO     2u   // central star pulses, light spreads outward
 #define EFFECT_SHADOWS  4u   // dust shadows drift across
 #define EFFECT_SHIMMER  8u   // blue glow shifts slightly in tone
-#define EFFECT_RAYS     16u  // faint light beams from the central star
 #define EFFECT_NEWSTARS 32u  // a few spots inside the gas softly pulse
 // The "storm" effects.
 #define EFFECT_LIGHTNING  64u   // split-second flashes deep inside the gas
 #define EFFECT_CELLS      128u  // brighter, busier storm areas that wander around
-#define EFFECT_CHURN      256u  // the bright gas boils with small fast swirls
-#define EFFECT_PULSES     512u  // waves of light running outward along the gas strands
 #define EFFECT_CRACKLE    1024u // tiny bright threads flicker along the edges of the gas
 
 // Smooth random "noise" (values 0..1 that change gradually across space).
@@ -454,19 +452,6 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             color = lerp(color, moved, wide * (1.0 - keep));
         }
 
-        // Storm: churning. The bright gas "boils": small swirls that change
-        // quickly, strongest inside storm cells. Stars are left alone.
-        if ((effects & EFFECT_CHURN) && mask > 0.0)
-        {
-            float2 p = img / 230.0;
-            float2 shift = float2(GradNoise(p + float2(nebulaTime * 0.11, 3.1)),
-                                  GradNoise(p + float2(17.3, nebulaTime * 0.13))) - 0.5;
-            float amount = 7.0 * mask * (0.4 + storm) * strength;   // picture pixels
-            float3 boiled = SamplePicture(img + shift * amount);
-            float keep = max(Starness(color, gas), Starness(boiled, gas));
-            color = lerp(color, boiled, 1.0 - keep);
-        }
-
         // 3. Passing dust shadows (in front of everything, so stars dim too).
         if (effects & EFFECT_SHADOWS)
         {
@@ -478,6 +463,7 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // Gentle breathing glow (always on).
         float breath = TimeNoise(nebulaTime / 14.0, 101u);
         float glow = 0.06 * breath;
+        float flashLight = 0.0;
 
         // 2. Nebula flash, built like the star bursts (seconds after it starts):
         //    0 - 1.2      build-up: the center brightens, flickering faster and faster
@@ -506,7 +492,16 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
                 float pop = smoothstep(0.0, 0.04, p);
                 level = pop * (1.0 * exp(-p / 0.22) + 0.12 * exp(-p / 1.0));
             }
-            glow += 0.9 * level * center * flashGain;
+            // The flash lights the cloud from inside: brighter on the thick
+            // strands of gas, darker where (made-up) clouds sit in front of it.
+            // Every flash gets its own pattern.
+            float start = realTime - t;
+            float2 seed = float2(frac(start * 0.1234), frac(start * 0.3717)) * 50.0;
+            float strands = saturate(Luma(color) / max(Luma(gas), 0.02) - 0.55);
+            float front = smoothstep(0.42, 0.70, Clouds(img / 380.0 + seed));
+            float hot = smoothstep(0.50, 0.80, Clouds(img / 260.0 + seed.yx + 7.0));
+            float lit = (0.15 + 0.85 * strands + 0.8 * hot) * (1.0 - 0.90 * front);
+            flashLight = level * center * lit * flashGain;
 
             // The wave of light, starting at the pop.
             float since = max(t - popAt, 0.0);
@@ -523,6 +518,8 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
         // Add less light where the picture is already nearly white,
         // so bright spots don't just turn into flat white.
         color += gas * mask * nebula * glow * saturate(1.25 - Luma(color));
+        // The nebula flash, lighting both the gas glow and the detail in it.
+        color += (color * 0.8 + gas * 0.9) * flashLight * wide * nebula * saturate(1.3 - Luma(color));
 
         // 4. Color shimmer: the blue glow drifts toward teal and back (never purple).
         if (effects & EFFECT_SHIMMER)
@@ -530,7 +527,8 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             float wave = Clouds(img / 1400.0 + nebulaTime * 0.012) * 2.0 - 1.0;
             float s = (TimeNoise(nebulaTime / 18.0, 102u) * 2.0 - 1.0) * 0.8 + wave * 0.6;
             // Only toward teal: going the other way turns the gas purple.
-            color += gas * mask * nebula * saturate(s) * float3(-0.10, 0.10, -0.02);
+            // At full shift: red -8%, green +6%, blue +3% of the gas's own color.
+            color += gas * mask * nebula * saturate(s) * float3(-0.08, 0.06, 0.03);
         }
 
         // Storm cells glow a little and flicker softly.
@@ -580,17 +578,6 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             color += lit * light * wide * 0.85 * strength * saturate(1.3 - Luma(color));
         }
 
-        // Storm: pulses along the gas strands, moving outward.
-        if (effects & EFFECT_PULSES)
-        {
-            float2 v = img - focusImage;
-            float angle = Angle(v) / TAU + 0.5;
-            float wave = GradNoise(float2(d / 340.0 - nebulaTime * 0.30, angle * 9.0));
-            wave = smoothstep(0.62, 0.92, wave);
-            float strand = saturate((Luma(color) - Luma(gas)) * 5.0) * (1.0 - Starness(color, gas) * 0.8);
-            color += color * wave * strand * wide * (0.25 + 0.35 * storm) * strength;
-        }
-
         // Storm: crackle. Thin bright threads flash along the edges of the gas.
         if (effects & EFFECT_CRACKLE)
         {
@@ -608,17 +595,6 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             // Only a few tiny patches crackle at any moment.
             float patch_ = smoothstep(0.80, 0.92, GradNoise(img / 140.0 + step_ * 5.3));
             color += float3(0.75, 0.88, 1.0) * spark * patch_ * edge * wide * (0.3 + storm) * 0.9 * strength;
-        }
-
-        // 5. Light rays from the central star, turning very slowly.
-        if (effects & EFFECT_RAYS)
-        {
-            float2 v = img - focusImage;
-            float angle = Angle(v) / TAU + 0.5;        // 0..1 around the star
-            float beams = Noise(float2(angle * 40.0 + nebulaTime * 0.02, 0.5));
-            beams = pow(beams, 4.0) * (0.5 + 0.5 * Noise(float2(angle * 25.0, nebulaTime / 9.0)));
-            float fall = exp(-d / 1100.0) * smoothstep(80.0, 400.0, d);
-            color += float3(0.55, 0.72, 1.0) * beams * fall * 0.10 * nebula * saturate(wide * 2.0);
         }
 
         // 6. Newborn stars: small warm glows that slowly swell and fade.
