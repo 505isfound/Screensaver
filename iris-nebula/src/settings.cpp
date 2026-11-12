@@ -40,24 +40,28 @@ Settings LoadSettings()
     s.placement = (int)std::min<DWORD>(ReadNumber(L"Placement", (DWORD)Settings().placement), (DWORD)kWallpaperCount);
     // Slider meanings changed in settings version 2 (the middle became Keegan's look),
     // so older saved slider positions are not used.
-    if (ReadNumber(L"SettingsVersion", 1) >= 2)
+    // Slider meanings changed again in version 5 (new middles), so older
+    // saved positions are not used.
+    if (ReadNumber(L"SettingsVersion", 1) >= 5)
         for (int i = 0; i < SliderCount; i++)
             s.sliders[i] = (int)std::min<DWORD>(ReadNumber(kSliderNames[i], (DWORD)s.sliders[i]), 100);
-    s.slowZoom = ReadNumber(L"SlowZoom", 0) != 0;
-    s.effects = ReadNumber(L"NebulaEffects", kAllEffects) & kAllEffects;
-    // The storm effects (bits 6-10) are new in settings version 3: switch them on.
-    DWORD version = ReadNumber(L"SettingsVersion", 1);
-    if (version < 3)
-        s.effects |= kAllEffects & ~63u;
-    // The swirling center (bit 11) is new in settings version 4: switch it on.
-    if (version < 4)
-        s.effects |= 1u << 11;
+    s.slowZoom = ReadNumber(L"SlowZoom", s.slowZoom ? 1 : 0) != 0;
+    DWORD saved = ReadNumber(L"NebulaEffects", 0xFFFFFFFF);
+    if (saved != 0xFFFFFFFF)
+    {
+        s.effects = saved & kAllEffects;
+        DWORD version = ReadNumber(L"SettingsVersion", 1);
+        if (version < 3)
+            s.effects |= kAllEffects & ~63u & ~(1u << 10);   // storm effects arrived (crackle stays off)
+        if (version < 4)
+            s.effects |= 1u << 11;                           // swirling center arrived
+    }
     return s;
 }
 
 void SaveSettings(const Settings& s)
 {
-    WriteNumber(L"SettingsVersion", 4);
+    WriteNumber(L"SettingsVersion", 5);
     WriteNumber(L"Layout", (DWORD)s.layout);
     WriteNumber(L"Placement", (DWORD)s.placement);
     for (int i = 0; i < SliderCount; i++)
@@ -71,17 +75,17 @@ Tuning GetTuning(const Settings& s)
     auto amount = [&](Slider k) { return s.sliders[k] / 50.0f; };                  // 0 .. 2
     auto speed = [&](Slider k) { return std::pow(2.0f, (s.sliders[k] - 50) / 25.0f); }; // 1/4 .. 4
     Tuning t;
-    // The middle of each slider (100%) is the look Keegan picked on 2026-11-12.
+    // The middle of each slider (100%) is the look Keegan picked (second round, v0.8).
     t.twinkle = 0.90f * amount(SliderTwinkleAmount);
-    t.twinkleSpeed = 2.0f * speed(SliderTwinkleSpeed);
+    t.twinkleSpeed = 1.474f * speed(SliderTwinkleSpeed);
     t.burstRate = 0.144f * amount(SliderBurstFrequency) * amount(SliderBurstFrequency);  // 0 .. 4x
     t.burstGain = 2.0f * amount(SliderBurstBrightness);
-    t.nebula = amount(SliderGlowAmount);
-    t.effectSpeed = 2.5f * speed(SliderEffectSpeed);
+    t.nebula = 2.0f * amount(SliderGlowAmount);
+    t.effectSpeed = 4.6f * speed(SliderEffectSpeed);
     t.flashInterval = s.sliders[SliderFlashFrequency] == 0 ? 0.0f
                     : 52.0f * std::pow(2.0f, (50 - s.sliders[SliderFlashFrequency]) / 25.0f);  // ~200 s .. 13 s
-    t.flashGain = amount(SliderFlashBrightness);
-    t.swirlSpeed = speed(SliderSwirlSpeed);
+    t.flashGain = 2.0f * amount(SliderFlashBrightness);
+    t.swirlSpeed = 4.0f * speed(SliderSwirlSpeed);
     return t;
 }
 

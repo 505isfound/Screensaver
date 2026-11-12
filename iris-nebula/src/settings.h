@@ -26,13 +26,13 @@ const DWORD kAllEffects = (1u << kEffectCount) - 1;
 
 struct Settings
 {
-    // Defaults are Keegan's picks (2026-11-12). Every slider's middle (50) is "100%",
+    // Defaults are Keegan's picks (v0.8). Every slider's middle (50) is "100%",
     // which is his chosen look; see GetTuning.
     LayoutMode layout = LayoutMode::Span;
     int  placement = 1;   // 0 nebula centered on main screen, else match wallpaper (see kWallpapers)
     int  sliders[SliderCount] = { 50, 50, 50, 50, 50, 50, 50, 50, 50 };
-    bool slowZoom = false;
-    DWORD effects = kAllEffects;  // nebula effects (bits), see EFFECT_... in shaders.hlsl; all on
+    bool slowZoom = true;
+    DWORD effects = kAllEffects & ~(1u << 10);  // nebula effects (bits, EFFECT_... in shaders.hlsl): all but crackle
 };
 
 // What the sliders mean for the drawing code.

@@ -84,6 +84,10 @@
   near the central star turns around it, fastest close in, using the same two-copies trick as the
   drifting gas so it never winds into a smear. Settings version 4 switches it on.
 
+- 2026-11-12: Second round of Keegan's picks became the slider middles (100%): twinkle speed
+  74% of before, glow 200%, effect speed 184%, flash brightness 200%, swirl speed 400%. Crackle
+  off and slow zoom on by default. Settings version 5 ignores older saved slider positions.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -101,3 +105,4 @@
 - 2026-11-12: v0.7: storm effects; fixed dark dots on dimming stars.
 - 2026-11-12: v0.7.1: cleaner star list, gentler dimming, cloudy flash, less green shimmer, 3 effects removed.
 - 2026-11-12: v0.8: swirling center + swirl speed slider.
+- 2026-11-12: v0.8.1: Keegan's second set of defaults.
