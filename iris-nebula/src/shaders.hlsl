@@ -622,41 +622,56 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             color += float3(0.75, 0.88, 1.0) * spark * patch_ * edge * wide * (0.3 + storm) * 0.9 * strength;
         }
 
-        // Swirling center: layers of wispy gas turning around the central star.
-        // Back layers are dim, deep blue and slow; front layers brighter, bigger
-        // and faster, so they slide past each other and the core looks deep.
-        // Each layer turns as a whole (with a fixed spiral twist), so it can keep
-        // turning forever without winding up.
-        if ((effects & EFFECT_SWIRL) && d < 520.0)
+        // Swirling center: a small whirlpool of gas inside the bright core,
+        // seen from the side (a tilted disk, top tipped away, seen slightly from
+        // above), turning counterclockwise. It doesn't paint new clouds on top:
+        // it bends and re-lights the picture's own gas, and dark dust in front
+        // of the core stays in front. Size: about the red circle Keegan drew
+        // (radius ~170 picture pixels around the central star).
+        if ((effects & EFFECT_SWIRL) && d < 320.0)
         {
+            const float R = 175.0;          // disk radius (picture pixels)
+            const float tilt = 0.50;        // how flat the disk looks (1 = face on)
             float2 v = img - focusImage;
-            float logR = log(max(d, 20.0) / 100.0);
-            float starOnTop = 1.0 - Starness(color, gas);
-            [unroll] for (int layer = 0; layer < 4; layer++)
+            // Perspective: the near (bottom) side looks a bit bigger than the far side.
+            float persp = 1.0 + 0.22 * clamp(v.y / (R * tilt), -1.0, 1.0);
+            float field = 0.0, weightSum = 0.0;
+            float2 push = 0.0;
+            [unroll] for (int layer = 0; layer < 3; layer++)
             {
-                float k = layer / 3.0;                                   // 0 = back, 1 = front
-                float turn = swirlTime * lerp(0.008, 0.018, k) + layer * 1.7;
-                float twist = lerp(0.9, 0.5, k);                         // how curly the spiral is
-                float a = -turn + twist * logR;
-                float2 q = float2(v.x * cos(a) - v.y * sin(a), v.x * sin(a) + v.y * cos(a));
-                float size = lerp(110.0, 190.0, k);                      // picture pixels per wisp
-                float n = Clouds(q / size + float2(layer * 13.1, layer * 7.7));
-                float radius = lerp(380.0, 480.0, k);                    // about the bright core
-                float area = 1.0 - smoothstep(radius * 0.5, radius, d);
-                area *= smoothstep(15.0, 70.0, d);                       // leave the star itself alone
-                float density = smoothstep(0.50, 0.80, n) * area;
-                float rim = (smoothstep(0.50, 0.62, n) - smoothstep(0.66, 0.82, n)) * area;  // bright wisp edges
-                // Light from the central star: wisps glow more close in.
-                float light = lerp(0.45, 1.0, k) * (0.55 + 0.7 * exp(-d / 240.0));
-                float3 tint = lerp(float3(0.45, 0.62, 1.00), float3(0.80, 0.90, 1.00), k);
-                float3 wisp = (gas * 0.9 + 0.06) * tint * light * (density * 0.7 + rim * 0.9);
-                // "Screen" blending: adds light without washing the picture out.
-                float3 add = saturate(wisp * lerp(0.30, 0.60, k) * strength * starOnTop);
-                color = 1.0 - (1.0 - color) * (1.0 - add);
-                // A soft shadow just outside each front wisp adds depth.
-                if (layer > 0)
-                    color *= 1.0 - 0.07 * (smoothstep(0.38, 0.50, n) - density) * area * strength;
+                float k = layer / 2.0;                       // 0 = lowest layer, 1 = highest
+                // Higher layers sit a little higher on screen (we look slightly down).
+                float2 w = float2(v.x, v.y + (k - 0.5) * 0.18 * R) / persp;
+                float2 disk = float2(w.x, w.y / tilt);       // flat disk coordinates
+                float r = length(disk);
+                // Counterclockwise on screen; each layer at its own speed, with a
+                // fixed spiral twist, turning as a whole so it never winds up.
+                float a = swirlTime * lerp(0.020, 0.032, k) + layer * 2.1 - 1.4 * log(max(r, 8.0) / 40.0);
+                float2 q = float2(disk.x * cos(a) - disk.y * sin(a), disk.x * sin(a) + disk.y * cos(a));
+                float size = lerp(34.0, 52.0, k);
+                float n = Clouds(q / size + float2(layer * 9.3, layer * 4.1)) - 0.5;
+                float inDisk = 1.0 - smoothstep(0.25, 1.0, r / R);
+                inDisk *= inDisk;
+                field += n * inDisk * lerp(0.7, 1.0, k);
+                weightSum += inDisk;
+                // Gas is carried around: push the picture along the turning direction.
+                float2 along = normalize(float2(-disk.y, disk.x) + 0.001);
+                push += along * n * inDisk * 8.0;
             }
+            float soft = saturate(weightSum / 3.0);
+            // Dark dust in front of the core: where the picture is darker than
+            // the gas glow around it, the swirl is hidden behind it.
+            float inFront = saturate((Luma(gas) - Luma(color)) * 5.0);
+            float showing = soft * (1.0 - 0.85 * inFront) * strength * (1.0 - Starness(color, gas));
+            // Far side (top) a little dimmer than the near side.
+            float nearSide = 0.85 + 0.15 * clamp(v.y / (R * tilt), -1.0, 1.0);
+            float3 bent = SamplePicture(img + float2(push.x, push.y * tilt) * showing);
+            // Thicker gas glows brighter; the gaps between the wisps are darker and
+            // a deeper blue, which is what makes the swirl show inside the white core.
+            float gap = saturate(-field * 2.2);
+            float3 swirled = bent * (1.0 + 0.45 * max(field, 0.0) * nearSide) + gas * max(field, 0.0) * 0.30;
+            swirled = lerp(swirled, swirled * float3(0.62, 0.78, 1.0), gap * 0.75);
+            color = lerp(color, swirled, showing);
         }
 
         // Experiment: moving inner light. The gas is treated like a landscape

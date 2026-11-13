@@ -104,6 +104,12 @@
 - 2026-11-13: Keegan didn't like the four experiments (inner light, dust, streams, sway); left in
   the code, off, with no checkbox.
 
+- 2026-11-13: Swirling center v3 (Keegan: was on top, too big, harsh edges, wrong direction): a
+  small tilted disk (radius ~175 picture px, measured from Keegan's red circle; flattened to 50%,
+  top tipped away, near side slightly larger and brighter), three layers turning counterclockwise.
+  It bends and re-lights the picture's own gas (thicker gas brighter, gaps darker and bluer)
+  instead of painting new clouds, and dark dust in front of the core hides it. Very soft edges.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -124,3 +130,4 @@
 - 2026-11-12: v0.8.1: Keegan's second set of defaults.
 - 2026-11-12: v0.8.2: start from a shortcut/hotkey.
 - 2026-11-13: v0.9: layered swirling core; spiky-star twinkle no longer lights up neighbours.
+- 2026-11-13: v0.9.1: swirl inside the core, tilted, counterclockwise, red-circle size.
