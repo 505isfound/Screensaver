@@ -220,8 +220,6 @@ StarVertex StarVS(uint id : SV_VertexID)
 
     float core = max((radius * 2.5 + 2.0) * scale, 1.5);
     float quad = canGlint ? max(radius * 10.0 * scale, core) : core;
-    if (canGlint)
-        core = quad;   // stars with spikes: twinkle the spikes too, not just the center
     if (age >= 0.0)
         quad = max(quad, 90.0 * size);
 
@@ -264,6 +262,14 @@ float4 StarPS(StarVertex v) : SV_Target
     // Area that brightens/dims with the twinkle: the whole star, evenly, fading
     // only at the very edge (for stars with spikes, that includes the spikes).
     float starArea = 1.0 - smoothstep(0.55, 1.0, dist / v.coreSize);
+    // Stars with spikes: also twinkle the spikes, using a thin cross shape
+    // (not a big circle, which would light up the stars next to it too).
+    if (v.quadSize > v.coreSize * 1.5)
+    {
+        float2 r = float2(offset.x * 0.9994 - offset.y * 0.035, offset.x * 0.035 + offset.y * 0.9994);
+        float cross_ = exp(-Sq(min(abs(r.x), abs(r.y))) / 2.0) * saturate(1.0 - dist / v.quadSize);
+        starArea = max(starArea, cross_);
+    }
 
     // Dimming is gentle: never more than 40% of the star's own light, so a
     // dimming star never stands out darker than its surroundings.
@@ -460,24 +466,6 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             color = lerp(color, moved, wide * (1.0 - keep));
         }
 
-        // Swirling center: the gas near the central star slowly turns around it,
-        // fastest close in. Like the drifting gas, two copies turn and take
-        // turns, so it can keep turning forever without winding into a smear.
-        if ((effects & EFFECT_SWIRL) && d < 2200.0)
-        {
-            const float period = 5.0;
-            float spin = 0.010 * exp(-Sq(d / 700.0));            // radians per second (at normal speed)
-            float2 v = img - focusImage;
-            float offset = GradNoise(img / 900.0 + 11.3) * 0.6;
-            float ph0 = frac(swirlTime / period + offset), ph1 = frac(swirlTime / period + offset + 0.5);
-            float a0 = spin * ph0 * period, a1 = spin * ph1 * period;
-            float2 p0 = focusImage + float2(v.x * cos(a0) - v.y * sin(a0), v.x * sin(a0) + v.y * cos(a0));
-            float2 p1 = focusImage + float2(v.x * cos(a1) - v.y * sin(a1), v.x * sin(a1) + v.y * cos(a1));
-            float3 turned = lerp(SamplePicture(p0), SamplePicture(p1), abs(ph0 - 0.5) * 2.0);
-            float keep = max(Starness(color, gas), Starness(turned, gas));
-            color = lerp(color, turned, wide * (1.0 - keep) * strength);
-        }
-
         // Experiment: depth sway. The bright gas shifts a few pixels back and
         // forth against the stars and the dark dust, as if seen in 3D.
         if (effects & EFFECT_SWAY)
@@ -632,6 +620,43 @@ float4 CompositePS(float4 pos : SV_Position) : SV_Target
             // Only a few tiny patches crackle at any moment.
             float patch_ = smoothstep(0.80, 0.92, GradNoise(img / 140.0 + step_ * 5.3));
             color += float3(0.75, 0.88, 1.0) * spark * patch_ * edge * wide * (0.3 + storm) * 0.9 * strength;
+        }
+
+        // Swirling center: layers of wispy gas turning around the central star.
+        // Back layers are dim, deep blue and slow; front layers brighter, bigger
+        // and faster, so they slide past each other and the core looks deep.
+        // Each layer turns as a whole (with a fixed spiral twist), so it can keep
+        // turning forever without winding up.
+        if ((effects & EFFECT_SWIRL) && d < 520.0)
+        {
+            float2 v = img - focusImage;
+            float logR = log(max(d, 20.0) / 100.0);
+            float starOnTop = 1.0 - Starness(color, gas);
+            [unroll] for (int layer = 0; layer < 4; layer++)
+            {
+                float k = layer / 3.0;                                   // 0 = back, 1 = front
+                float turn = swirlTime * lerp(0.008, 0.018, k) + layer * 1.7;
+                float twist = lerp(0.9, 0.5, k);                         // how curly the spiral is
+                float a = -turn + twist * logR;
+                float2 q = float2(v.x * cos(a) - v.y * sin(a), v.x * sin(a) + v.y * cos(a));
+                float size = lerp(110.0, 190.0, k);                      // picture pixels per wisp
+                float n = Clouds(q / size + float2(layer * 13.1, layer * 7.7));
+                float radius = lerp(380.0, 480.0, k);                    // about the bright core
+                float area = 1.0 - smoothstep(radius * 0.5, radius, d);
+                area *= smoothstep(15.0, 70.0, d);                       // leave the star itself alone
+                float density = smoothstep(0.50, 0.80, n) * area;
+                float rim = (smoothstep(0.50, 0.62, n) - smoothstep(0.66, 0.82, n)) * area;  // bright wisp edges
+                // Light from the central star: wisps glow more close in.
+                float light = lerp(0.45, 1.0, k) * (0.55 + 0.7 * exp(-d / 240.0));
+                float3 tint = lerp(float3(0.45, 0.62, 1.00), float3(0.80, 0.90, 1.00), k);
+                float3 wisp = (gas * 0.9 + 0.06) * tint * light * (density * 0.7 + rim * 0.9);
+                // "Screen" blending: adds light without washing the picture out.
+                float3 add = saturate(wisp * lerp(0.30, 0.60, k) * strength * starOnTop);
+                color = 1.0 - (1.0 - color) * (1.0 - add);
+                // A soft shadow just outside each front wisp adds depth.
+                if (layer > 0)
+                    color *= 1.0 - 0.07 * (smoothstep(0.38, 0.50, n) - density) * area * strength;
+            }
         }
 
         // Experiment: moving inner light. The gas is treated like a landscape

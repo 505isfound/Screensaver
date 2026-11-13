@@ -95,6 +95,15 @@
   (no checkbox; IRIS_DEMO_EFFECTS=<bits> turns them on for testing): moving inner light (4096),
   floating dust (8192), falling streams (16384), depth sway (32768). Waiting for Keegan's picks.
 
+- 2026-11-13: Swirling center redone from Keegan's sketch: four layers of wispy gas turning around
+  the central star inside the bright core (back layers dim, deep blue, slow; front layers bright,
+  bigger, faster, with soft shadows), blended with "screen" so the picture isn't washed out. Each
+  layer turns as a whole with a fixed spiral twist, so it never winds up. Same checkbox/slider.
+- 2026-11-13: Stars with spikes twinkle in a thin cross shape (center + spikes) instead of a big
+  circle, which had made nearby stars light up together (noticed on triple 1080p).
+- 2026-11-13: Keegan didn't like the four experiments (inner light, dust, streams, sway); left in
+  the code, off, with no checkbox.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -114,3 +123,4 @@
 - 2026-11-12: v0.8: swirling center + swirl speed slider.
 - 2026-11-12: v0.8.1: Keegan's second set of defaults.
 - 2026-11-12: v0.8.2: start from a shortcut/hotkey.
+- 2026-11-13: v0.9: layered swirling core; spiky-star twinkle no longer lights up neighbours.
