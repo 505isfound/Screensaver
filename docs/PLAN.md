@@ -110,6 +110,10 @@
   It bends and re-lights the picture's own gas (thicker gas brighter, gaps darker and bluer)
   instead of painting new clouds, and dark dust in front of the core hides it. Very soft edges.
 
+- 2026-11-13: Straight lines sliding right-to-left: the float-based grid hash behind all cloud
+  patterns repeated a lot (about 200 distinct values per 2000 cells) and got worse as patterns
+  moved, giving stripes. Replaced with an integer hash; patterns stay clean however long it runs.
+
 ## Changelog
 - 2026-11-11: Iris Nebula v0.1.
 - 2026-11-11: Added matching triple-monitor wallpaper (5760 × 1080).
@@ -131,3 +135,4 @@
 - 2026-11-12: v0.8.2: start from a shortcut/hotkey.
 - 2026-11-13: v0.9: layered swirling core; spiky-star twinkle no longer lights up neighbours.
 - 2026-11-13: v0.9.1: swirl inside the core, tilted, counterclockwise, red-circle size.
+- 2026-11-13: v0.9.2: fixed straight lines in the moving gas patterns.

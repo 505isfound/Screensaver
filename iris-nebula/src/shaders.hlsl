@@ -320,20 +320,15 @@ float4 CompositeVS(uint vertexId : SV_VertexID) : SV_Position
 #define EFFECT_SWAY       32768u // the bright gas sways a little against the stars (depth)
 
 // Smooth random "noise" (values 0..1 that change gradually across space).
-float Hash2(float2 p)
+// Random value 0..1 for a grid cell. Uses whole numbers, so it stays clean
+// however far the patterns have moved (an older version broke down into
+// straight stripes after the screensaver had run for a while).
+float Hash2(float2 cell)
 {
-    p = frac(p * float2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return frac(p.x * p.y);
+    int2 c = int2(floor(cell));
+    return Hash((uint)c.x * 1597334677u ^ (uint)c.y * 3812015801u ^ 0x9E3779B9u);
 }
 
-float Noise(float2 p)
-{
-    float2 i = floor(p), f = frac(p);
-    f = f * f * (3.0 - 2.0 * f);
-    float a = Hash2(i), b = Hash2(i + float2(1, 0)), c = Hash2(i + float2(0, 1)), d = Hash2(i + float2(1, 1));
-    return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
-}
 
 // Angle of a direction, -pi..pi (written out because some shader compilers lack atan2).
 float Angle(float2 v)
